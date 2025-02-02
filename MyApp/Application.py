@@ -25,6 +25,8 @@ class PowerMeterApp(App):
 
         self.plot = XYPlot(figsize=(6,4))
         self.plot.grid_into(self.window, row=2, column=0, columnspan=3, padx=25, pady=5, sticky="nsew")
+        self.plot.append(0,0)
+        self.plot.axes.setter("xlabel", "Time (s)")
 
         self.box = Box("Actions")
         self.box.grid_into(self.window, row=0, column=0, columnspan=2, padx=25, pady=10, sticky="nsew")
@@ -62,6 +64,7 @@ class PowerMeterApp(App):
         else:
             self.is_refreshing = False
             button.label = "Start"
+            
 
     def update_loop(self):
         self.device.update_from_device()
@@ -72,6 +75,7 @@ class PowerMeterApp(App):
         last = len(self.plot.x)
         self.plot.append(last, power)
         self.plot.update_plot()
+        
 
         if self.is_refreshing:
             self.after(300, self.update_loop)
@@ -110,7 +114,7 @@ class PowerMeterDevice(Bindable):
 
     def get_power_from_device(self):
         if self.debug:
-            self.power = random.randrange(900,1000,1)/100
+            self.power = random.randrange(800,1000,1)/100
         else:
             pass # Update via USB
 
@@ -145,7 +149,3 @@ class PowerMeterDevice(Bindable):
         self.get_firmware_from_device()
         self.get_temperature_from_device()
         self.get_wavelength_from_device()
-
-if __name__ == "__main__":
-    app = PowerMeterApp()
-    app.mainloop()
