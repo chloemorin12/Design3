@@ -26,7 +26,7 @@ class PowerMeterApp(App):
         self.plot = XYPlot(figsize=(6,4))
         self.plot.grid_into(self.window, row=2, column=0, columnspan=3, padx=25, pady=5, sticky="nsew")
         self.plot.append(0,0)
-        self.plot.axes.setter("xlabel", "Time (s)")
+        #self.plot.axes.setter("xlabel", "Time (s)") # Revoir 
 
         self.box = Box("Actions")
         self.box.grid_into(self.window, row=0, column=0, columnspan=2, padx=25, pady=10, sticky="nsew")
