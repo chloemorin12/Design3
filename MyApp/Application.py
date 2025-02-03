@@ -22,14 +22,17 @@ class PowerMeterApp(App):
         self.measurement_label = Label("--- mW", font=self.big_font)
         self.measurement_label.grid_into(self.window, row=1, column=1, padx=25, pady=25,sticky="nsew")
 
+        self.box = Box("Puissance")
+        self.box2 = Box("Position", width=250)
+        self.box.grid_into(self.window, row=0, column=0, columnspan=1, padx=10, pady=10, sticky="nsew")
+        self.box2.grid_into(self.window, row=0, column=1, columnspan=1, padx=10, pady=10, sticky="nsew")
+
 
         self.plot = XYPlot(figsize=(6,4))
         self.plot.grid_into(self.window, row=2, column=0, columnspan=3, padx=25, pady=5, sticky="nsew")
         self.plot.append(0,0)
-        #self.plot.axes.setter("xlabel", "Time (s)") # Revoir 
+        #self.plot.axes.setter("xlabel", "Time (s)") # Revoir
 
-        self.box = Box("Actions")
-        self.box.grid_into(self.window, row=0, column=0, columnspan=2, padx=25, pady=10, sticky="nsew")
 
         self.running_indicator = BooleanIndicator(diameter=25)
         self.running_indicator.grid_into(self.box, row=0, column=0, padx=35, pady=25, sticky="w")
