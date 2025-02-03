@@ -8,7 +8,6 @@ def VoltageToResistance(voltage, R2, gain, R4):
     return Resistance
     
     
-    
 def steinhart_hart_resistance_to_temperature(resistance, coefficients):
     A, B, C = coefficients
     lnR = math.log(resistance)

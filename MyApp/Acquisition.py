@@ -13,11 +13,17 @@ ax.set_title("Real-Time Voltage Reading")
 
 liste = []
 
-with nidaqmx.Task() as task:
-    task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
+with nidaqmx.Task() as ao_task:
+    ao_task.ao_channels.add_ao_voltage_chan("Dev1/ao1")  # Adjust channel as needed
+    ao_task.write([1,2,3,4,5])  # Output 2.5V
+
+# Create a separate task for Analog Input
+with nidaqmx.Task() as ai_task:
+    ai_task.ai_channels.add_ai_voltage_chan("Dev1/ai0")
+    voltage = ai_task.read()
 
     while True:
-        voltage = task.read()
+        voltage = ai_task.read()
         liste.append(voltage)
 
         line.set_xdata(range(len(liste)))
