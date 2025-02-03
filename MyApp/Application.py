@@ -13,7 +13,7 @@ class PowerMeterApp(App):
         self.window.row_resize_weight(1,0)
         self.window.row_resize_weight(2,1)
         self.window.column_resize_weight(0,1) 
-        self.window.column_resize_weight(1,1) 
+        self.window.column_resize_weight(1,1)
 
         size = 60
         self.bigb_font = tkFont.Font(family='Helvetica', size=size, weight='bold')
@@ -23,25 +23,39 @@ class PowerMeterApp(App):
         self.measurement_label.grid_into(self.window, row=1, column=1, padx=25, pady=25,sticky="nsew")
 
         self.box = Box("Puissance")
-        self.box2 = Box("Position", width=250)
-        self.box.grid_into(self.window, row=0, column=0, columnspan=1, padx=10, pady=10, sticky="nsew")
-        self.box2.grid_into(self.window, row=0, column=1, columnspan=1, padx=10, pady=10, sticky="nsew")
+        #self.box2 = Box("Position", width=250)
+        self.box.grid_into(self.window, row=0, column=0, padx=10, pady=10, sticky="nsew")
+        #self.box2.grid_into(self.window, row=0, column=1, columnspan=1, padx=10, pady=10, sticky="nsew")
 
 
         self.plot = XYPlot(figsize=(6,4))
-        self.plot.grid_into(self.window, row=2, column=0, columnspan=3, padx=25, pady=5, sticky="nsew")
+        self.plot.grid_into(self.window, row=3, column=0, columnspan=1, padx=25, pady=5, sticky="nsew")
         self.plot.append(0,0)
         #self.plot.axes.setter("xlabel", "Time (s)") # Revoir
 
+        '''
+        # Grid test
+        self.view2 = View(width=300, height=100)
+        self.view2.grid_into(self.window, column=0, row=2, pady=5, padx=5, sticky="nsew")
+        self.view2.grid_propagate(True)
+        self.view2.widget.grid_rowconfigure(0, weight=0)
+        self.view2.widget.grid_rowconfigure(1, weight=0)
+        self.view2.widget.grid_rowconfigure(2, weight=1)
+        self.view2.widget.grid_columnconfigure(0, weight=2)
+        popup_label = Label(text='A popup menu')
+        popup_label.grid_into(self.view2, column=0, row=2, pady=5, padx=5, sticky="")
+        popup_label.grid_into(self.view2, column=3, row=1, pady=5, padx=5, sticky="")
+        '''
 
+        
         self.running_indicator = BooleanIndicator(diameter=25)
         self.running_indicator.grid_into(self.box, row=0, column=0, padx=35, pady=25, sticky="w")
         self.start_button = Button("Start", user_event_callback=self.click_start)
         self.start_button.grid_into(self.box, row=0, column=1, padx=10, pady=10, sticky="ns")
         self.save_button = Button("Save data…", user_event_callback=self.click_save)
-        self.save_button.grid_into(self.box, row=0, column=2, padx=10, pady=10)
-        self.clear_button = Button("Clear graph", user_event_callback=self.click_clear)
-        self.clear_button.grid_into(self.box, row=0, column=3, padx=10, pady=10)
+        self.save_button.grid_into(self.box, row=0, column=3, padx=10, pady=10)
+        self.clear_button = Button("Mise à zéro", user_event_callback=self.click_clear)
+        self.clear_button.grid_into(self.box, row=0, column=5, padx=10, pady=10)
         self.wavelength_entry = LabelledEntry("Wavelength:", character_width=6)
         self.wavelength_entry.grid_into(self.box, row=0, column=4, sticky="e")
         self.firmware_label = Label()
