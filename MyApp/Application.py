@@ -26,7 +26,7 @@ class PowerMeterApp(App):
 
 
         # Changer la couleur ou mettre indicateur + combiner start/stop
-        self.start_button = Button("Démarrer") #, user_event_callback=self.click_start)
+        self.start_button = Button("Démarrer", user_event_callback=self.click_start)
         #self.start_button.background_color = 'blue' 
         self.start_button.place_into(self.window, Position_row1_X, Position_row1_Y, Longueur_bouton, Hauteur_bouton)
         self.stop_button = Button("Arrêter") #, user_event_callback=self.click_start)
@@ -49,16 +49,27 @@ class PowerMeterApp(App):
         self.register = Button("Enregistrer", user_event_callback=self.click_save) #, user_event_callback=self.click_start)
         self.register.place_into(self.window, Position_row1_X+5*(intersite_X+Longueur_bouton), Position_row1_Y, Longueur_bouton, Hauteur_bouton)
 
+        # Quitter l'interface
+        # Ajouter pop-up : suggérer sauvegarde des données
+        self.quitter = Button("Quitter") #, user_event_callback=self.click_start)
+        self.quitter.place_into(self.window, 1550-Longueur_bouton-Position_row1_X, Position_row1_Y, Longueur_bouton, Hauteur_bouton)
 
 
-        '''
-        Affichage Puissance
-        size = 60
+        # Communication
+        self.com = Entry("")
+        self.com.place_into(self.window, intersite_X, 625, 810, 125)
+        self.label_com = Label('Communication')
+        self.label_com.place_into(self.window, intersite_X, 600-25, 200, 50)
+        
+
+        # Affichage Puissance
+        size = 30
         self.bigb_font = tkFont.Font(family='Helvetica', size=size, weight='bold')
         self.big_font = tkFont.Font(family='Helvetica', size=size)
         self.measurement_label = Label("--- mW", font=self.big_font)
-        self.measurement_label.grid_into(self.window, row=1, column=1, padx=25, pady=25,sticky="nsew")
-        '''
+        self.measurement_label.place_into(self.window, Position_row1_X+250, Position_row1_Y+425+2*intersite_Y, 500, 100)
+
+
 
         #self.box = Box("Puissance")
         #self.box2 = Box("Position", width=250)
@@ -66,12 +77,19 @@ class PowerMeterApp(App):
         #self.box2.grid_into(self.window, row=0, column=1, columnspan=1, padx=10, pady=10, sticky="nsew")
 
 
-        self.plot = XYPlot(figsize=(6,4))
-        self.plot.place_into(self.window, Position_row1_X, Position_row1_Y+intersite_Y+Hauteur_bouton, 810, 425)
-        #self.plot.grid_into(self.window, row=3, column=0, columnspan=1, padx=25, pady=5, sticky="nsew")
-        self.plot.append(0,0)
+        # Graphique puissance dans le temps
+
+        self.plot_puissance = XYPlot(figsize=(6,5))
+        self.plot_puissance.place_into(self.window, Position_row1_X, Position_row1_Y+intersite_Y+Hauteur_bouton, 810, 425)
+        self.plot_puissance.append(0,0)
         #self.plot.axes.setter("xlabel", "Time (s)") # Revoir
 
+
+        # Graphique position
+        self.plot_position = XYPlot(figsize=(6,4))
+        self.plot_position.place_into(self.window, Position_row1_X+810+intersite_X, Position_row1_Y+intersite_Y+Hauteur_bouton, 675, 425)
+        self.plot_position.append(0,0)
+        #self.plot.axes.setter("xlabel", "Time (s)") # Revoir
 
             
         self.running_indicator = BooleanIndicator(diameter=25)
@@ -109,22 +127,20 @@ class PowerMeterApp(App):
 
     def update_loop(self):
 
-        pass
-        '''
+
         self.device.update_from_device()
 
         power = self.device.power
         self.measurement_label.value_variable.set(f"{power:.2f} mW")
         
-        last = len(self.plot.x)
-        self.plot.append(last, power)
-        self.plot.update_plot()
+        last = len(self.plot_puissance.x)
+        self.plot_puissance.append(last, power)
+        self.plot_puissance.update_plot()
         
 
         if self.is_refreshing:
             self.after(300, self.update_loop)
-        '''
-
+        
     def click_save(self, event, button):
         filepath = filedialog.asksaveasfilename(
             parent=self.window.widget,
@@ -136,7 +152,7 @@ class PowerMeterApp(App):
             pass # Do something with x,y
 
     def click_clear(self, event, button):
-        self.plot.clear_plot()
+        self.plot_puissance.clear_plot()
 
 
 class PowerMeterDevice(Bindable):
