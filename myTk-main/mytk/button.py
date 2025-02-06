@@ -5,13 +5,23 @@ from .base import *
 
 class Button(Base):
     def __init__(
-        self, label="Button", default=False, width=None, user_event_callback=None
+        self, label="Button", default=False, width=None, user_event_callback=None, background_color='white'
     ):
         Base.__init__(self)
         self.initial_label = label
         self.width = width
         self.user_action_callback = user_event_callback
         self.default = default
+        self._background_color = background_color
+
+
+    @property
+    def background_color(self):
+        return self._background_color
+
+    @background_color.setter
+    def background_color(self, color):
+        self._background_color = color
 
     @property
     def label(self):
