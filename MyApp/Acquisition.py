@@ -35,3 +35,9 @@ with nidaqmx.Task() as ai_task:
         plt.draw()
         plt.pause(0.1)
         time.sleep(0.1)
+
+
+
+# fonction pour retourner la dernière valeur de voltage mesuré 
+def voltage_mesurée():
+    pass

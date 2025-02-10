@@ -137,9 +137,12 @@ class PowerMeterApp(App):
         self.plot_puissance.append(last, power)
         self.plot_puissance.update_plot()
         
-
         if self.is_refreshing:
             self.after(300, self.update_loop)
+
+    # Modifier la fonction updat_loop pour les valeur de la thermistance 
+
+    
         
     def click_save(self, event, button):
         filepath = filedialog.asksaveasfilename(
@@ -171,6 +174,18 @@ class PowerMeterDevice(Bindable):
         self.wavelength = 1064
         self.firmware = None
         self.temperature = None
+
+
+
+    # Fonction pour obtenir la dernière valeur de voltage de la thermistance
+    def get_thermistane_from_device(self):   
+        pass
+
+        # self.power = appel fonction à partir d'aquisition qui retourne une valeur de voltage (la dernière)
+
+
+
+
 
     def get_power_from_device(self):
         if self.debug:
