@@ -51,8 +51,10 @@ class PowerMeterApp(App):
 
         # Quitter l'interface
         # Ajouter pop-up : suggérer sauvegarde des données
-        self.quitter = Button("Quitter") #, user_event_callback=self.click_start)
+        self.quitter = Button("Quitter", user_event_callback=self.Suggest_save) #, user_event_callback=self.click_start)
         self.quitter.place_into(self.window, 1550-Longueur_bouton-Position_row1_X, Position_row1_Y, Longueur_bouton, Hauteur_bouton)
+
+
 
 
         # Communication
@@ -78,7 +80,6 @@ class PowerMeterApp(App):
 
 
         # Graphique puissance dans le temps
-
         self.plot_puissance = XYPlot(figsize=(6,5))
         self.plot_puissance.place_into(self.window, Position_row1_X, Position_row1_Y+intersite_Y+Hauteur_bouton, 810, 425)
         self.plot_puissance.append(0,0)
@@ -123,7 +124,28 @@ class PowerMeterApp(App):
         else:
             self.is_refreshing = False
             button.label = "Start"
-            
+
+
+    def Suggest_save(self, event, button):        
+
+        # Empêcher d'autres action lorsque cette fenêtre est ouverte
+
+        self.suggest_save_window = Window("500x200", 'Sauvegarde')
+
+        #self.avertissemnet = Label('Souhaitez-vous enregistrer les données de la dernière aquisition avant de quitter ?')
+        #self.avertissemnet.place_into(self.suggest_save_window, 50,100,100, 50)
+
+
+        self.save_2 = Button("Enregistrer les données", user_event_callback=self.click_save)
+        self.save_2.place_into(self.suggest_save_window, 500,100,500,200)
+
+        #self.Quit_2 = Button("Quitter sans enregistrer les données") # Ajouter fonction pour fermer le programme
+        #self.Quit_2.place_into(self.suggest_save_window, 300,100,500,200)
+        
+        #self.suggest_save_window.place_into()
+
+        
+                
 
     def update_loop(self):
 
@@ -140,7 +162,7 @@ class PowerMeterApp(App):
         if self.is_refreshing:
             self.after(300, self.update_loop)
 
-    # Modifier la fonction updat_loop pour les valeur de la thermistance 
+    # Modifier la fonction updat_loop pour les valeur de la thermistance
 
     
         
