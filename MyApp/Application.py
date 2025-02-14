@@ -1,6 +1,6 @@
 from mytk import *
 from mytk.indicators import *
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 import random
 
 class PowerMeterApp(App):
@@ -131,6 +131,7 @@ class PowerMeterApp(App):
         # Empêcher d'autres action lorsque cette fenêtre est ouverte
 
         self.suggest_save_window = Window("500x200", 'Sauvegarde')
+        #messagebox.Message('TEST')
 
         #self.avertissemnet = Label('Souhaitez-vous enregistrer les données de la dernière aquisition avant de quitter ?')
         #self.avertissemnet.place_into(self.suggest_save_window, 50,100,100, 50)
