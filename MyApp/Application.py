@@ -34,7 +34,7 @@ class PowerMeterApp(App):
         self.misea0.place_into(self.window, Position_row1_X+2*(intersite_X+Longueur_bouton), Position_row1_Y, Longueur_bouton, Hauteur_bouton)
 
         # Paramètre : Permet d'aller choisir un fichier avec les valeurs ?
-        self.paramètre = Button("Paramètre")
+        self.paramètre = Button("Paramètres", user_event_callback=self.click_chose_parametres)
         self.paramètre.place_into(self.window, Position_row1_X+3*(intersite_X+Longueur_bouton), Position_row1_Y, Longueur_bouton, Hauteur_bouton)
         
         # Connexion : Permet de se connecter en un clic peut importe le port de connexion utilisé
@@ -152,6 +152,25 @@ class PowerMeterApp(App):
         #self.Quit_2.place_into(self.suggest_save_window, 300,100,500,200)
         
         #self.suggest_save_window.place_into()
+
+
+    def click_chose_parametres(self, event, button):
+        self.parameters = []
+        self.dico_parameters = {}
+        filepath = filedialog.askopenfilename(filetypes=[('Data file','.dat'),('CSV file','.csv')])
+        file = open(filepath, 'r')
+
+        self.parameters.append(file.read())
+        self.parameters = self.parameters[0].split('\n')
+        for i in range(len(self.parameters)):
+            self.parameters[i] = self.parameters[i].split(';')
+
+            if len(self.parameters[i]) == 2:
+                self.dico_parameters.update({self.parameters[i][0]:self.parameters[i][1]})
+
+        #print(self.dico_parameters['parametre1'])
+        file.close()
+
 
         
                 
