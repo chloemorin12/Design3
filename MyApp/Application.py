@@ -168,10 +168,8 @@ class PowerMeterApp(App):
             if len(self.parameters[i]) == 2:
                 self.dico_parameters.update({self.parameters[i][0]:self.parameters[i][1]})
 
-        #print(self.dico_parameters['parametre1'])
+        print(self.dico_parameters['parametre1'])
         file.close()
-
-
         
                 
     def update_loop(self):
@@ -199,8 +197,10 @@ class PowerMeterApp(App):
             filetypes=[('Data file','.dat'),('CSV file','.csv')],
         )
         if filepath != "":
-            x,y = self.plot_puissance.x, self.plot_puissance.y
+            x,y = self.plot_puissance.x, self.plot_puissance.y # données à enregistrer + time stamp + position?
             pass # Do something with x,y
+
+
 
     def click_clear(self, event, button):
         #print(self.plot_puissance.x, self.plot_puissance.y)
