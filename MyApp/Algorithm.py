@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 
-
 def VoltageToResistance(voltage, R2, gain, R4):
     Vin = 12
     diffdepot = voltage/(gain*Vin)
@@ -33,9 +32,10 @@ print('hummmmmm', VoltageToResistance(0.779,22000,2.5,43000))
 
 
 
+
 thermistor_positions = np.array([
     [0, 2], [1, 3], [2, 4], [3, 3], [4, 2],[1, 1], [2, 2], [3, 1],[2, 0]])
-temperature_values = np.array([21, 24, 30, 27, 22, 26, 35, 28, 24])
+temperature_values = np.array([21, 24, 30, 27, 70, 26, 35, 28, 23])
 
 
 x_data = thermistor_positions[:, 0]
@@ -48,15 +48,12 @@ A, x_peak, y_peak, sigma_x, sigma_y, offset = params
 print(f"Estimated heat peak at: ({x_peak:.2f}, {y_peak:.2f})")
 
 fig, ax = plt.subplots(figsize=(10, 6))
-print(x_data)
-print(y_data)
 scatter = ax.scatter(x_data, y_data, c=z_data, cmap='coolwarm', marker='o', label='Thermistor Readings')
 ax.scatter(x_peak, y_peak, c='black', marker='x', s=30, label="Estimated Heat Source")
 ax.set_xlabel("X Position")
 ax.set_ylabel("Y Position")
 ax.set_title("Heat Source Localization using Gaussian Fit")
 ax.legend()
-
 cbar = plt.colorbar(scatter, ax=ax)
 cbar.set_label('Temperature (°C)')
 plt.show()
