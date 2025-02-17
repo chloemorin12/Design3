@@ -1,6 +1,6 @@
 from mytk import *
 from mytk.indicators import *
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 import random
 
 class PowerMeterApp(App):
@@ -24,35 +24,34 @@ class PowerMeterApp(App):
         intersite_X = 15
         intersite_Y = 15
 
-
-        # Changer la couleur ou mettre indicateur + combiner start/stop
         self.start_button = Button("Démarrer", user_event_callback=self.click_start)
-        #self.start_button.background_color = 'blue' 
-        self.start_button.place_into(self.window, Position_row1_X, Position_row1_Y, Longueur_bouton, Hauteur_bouton)
-        self.stop_button = Button("Arrêter") #, user_event_callback=self.click_start)
-        self.stop_button.place_into(self.window, Position_row1_X+intersite_X+Longueur_bouton, Position_row1_Y, Longueur_bouton, Hauteur_bouton)
+        self.start_button.place_into(self.window, Position_row1_X+intersite_X+50, Position_row1_Y, Longueur_bouton, Hauteur_bouton)
+        #self.stop_button = Button("Arrêter") #, user_event_callback=self.click_start)
+        #self.stop_button.place_into(self.window, Position_row1_X+intersite_X+Longueur_bouton, Position_row1_Y, Longueur_bouton, Hauteur_bouton)
 
         # Mise à zéro : Initialisation prise de donnée ? Détecte si la température est trop élevée ?
-        self.misea0 = Button("Mise à zéro", user_event_callback=self.click_clear) #, user_event_callback=self.click_start)
+        self.misea0 = Button("Mise à zéro", user_event_callback=self.click_clear)
         self.misea0.place_into(self.window, Position_row1_X+2*(intersite_X+Longueur_bouton), Position_row1_Y, Longueur_bouton, Hauteur_bouton)
 
         # Paramètre : Permet d'aller choisir un fichier avec les valeurs ?
-        self.paramètre = Button("Paramètre") #, user_event_callback=self.click_start)
+        self.paramètre = Button("Paramètres", user_event_callback=self.click_chose_parametres)
         self.paramètre.place_into(self.window, Position_row1_X+3*(intersite_X+Longueur_bouton), Position_row1_Y, Longueur_bouton, Hauteur_bouton)
         
         # Connexion : Permet de se connecter en un clic peut importe le port de connexion utilisé
         # Ouverture d'une autre fenêtre ?  radiobutton
-        self.connexion = Button("Connexion") #, user_event_callback=self.click_start)
+        self.connexion = Button("Connexion")
         self.connexion.place_into(self.window, Position_row1_X+4*(intersite_X+Longueur_bouton), Position_row1_Y, Longueur_bouton, Hauteur_bouton)
 
         # Enregistrement des données
-        self.register = Button("Enregistrer", user_event_callback=self.click_save) #, user_event_callback=self.click_start)
+        self.register = Button("Enregistrer", user_event_callback=self.click_save)
         self.register.place_into(self.window, Position_row1_X+5*(intersite_X+Longueur_bouton), Position_row1_Y, Longueur_bouton, Hauteur_bouton)
 
         # Quitter l'interface
         # Ajouter pop-up : suggérer sauvegarde des données
-        self.quitter = Button("Quitter") #, user_event_callback=self.click_start)
+        self.quitter = Button("Quitter", user_event_callback=self.Suggest_save)
         self.quitter.place_into(self.window, 1550-Longueur_bouton-Position_row1_X, Position_row1_Y, Longueur_bouton, Hauteur_bouton)
+
+
 
 
         # Communication
@@ -78,10 +77,9 @@ class PowerMeterApp(App):
 
 
         # Graphique puissance dans le temps
-
         self.plot_puissance = XYPlot(figsize=(6,5))
         self.plot_puissance.place_into(self.window, Position_row1_X, Position_row1_Y+intersite_Y+Hauteur_bouton, 810, 425)
-        self.plot_puissance.append(0,0)
+        #self.plot_puissance.append(0,0) # maybe not
         #self.plot.axes.setter("xlabel", "Time (s)") # Revoir
 
 
@@ -93,7 +91,7 @@ class PowerMeterApp(App):
 
             
         self.running_indicator = BooleanIndicator(diameter=25)
-        self.running_indicator.grid_into(self.window, row=0, column=0, padx=35, pady=25, sticky="w")
+        self.running_indicator.place_into(self.window, Position_row1_X, Position_row1_Y,45,45)
         
         #self.save_button = Button("Save data…", user_event_callback=self.click_save)
         #self.save_button.grid_into(self.box, row=0, column=3, padx=10, pady=10)
@@ -110,7 +108,7 @@ class PowerMeterApp(App):
         self.device.bind_properties("wavelength", self.wavelength_entry.entry, "value_variable")
         self.device.bind_properties("firmware", self.firmware_label, "value_variable")
         self.bind_properties("is_refreshing", self.running_indicator, "value_variable")
-        self.bind_properties("is_refreshing", self.start_button, "is_disabled")
+        #self.bind_properties("is_refreshing", self.start_button, "is_disabled") # Permet de désactiver les boutons 
         self.bind_properties("is_refreshing", self.wavelength_entry.entry, "is_disabled")
 
         self.update_loop() # We update once at least
@@ -119,14 +117,64 @@ class PowerMeterApp(App):
         if not self.is_refreshing:
             self.is_refreshing = True
             self.update_loop()
-            button.label = "Stop"
+            button.label = "Arrêter"
         else:
             self.is_refreshing = False
-            button.label = "Start"
-            
+            button.label = "Démarrer"
 
+    '''
+    def window_size(self):
+        w = Tk()
+        w.attributes('-fullscreen', True)
+        size = (w.winfo_screenmmwidth(), w.winfo_screenmmheight())
+        w.quit()
+        print(size)
+    '''
+
+
+    def Suggest_save(self, event, button):        
+
+        # To Do : Empêcher d'autres action lorsque cette fenêtre est ouverte
+
+        self.suggest_save_window = Window("500x300", 'Sauvegarde')
+        #self.suggest_save_window.place_into(self.window, 1000, 300, 500, 300)
+        #messagebox.Message('TEST')
+
+        self.avertissemnet = Label("Souhaitez-vous enregistrer les données de la dernière aquisition avant de quitter ?")
+        self.avertissemnet.create_widget(self.suggest_save_window)
+        self.avertissemnet.widget.place(self.suggest_save_window, 0, 150, 100, 50)
+
+
+        self.save_2 = Button("Enregistrer les données", user_event_callback=self.click_save)
+        self.save_2.place_into(self.suggest_save_window, 500,100,500,200)
+
+        #self.Quit_2 = Button("Quitter sans enregistrer les données") # Ajouter fonction pour fermer le programme
+        #self.Quit_2.place_into(self.suggest_save_window, 300,100,500,200)
+        
+        #self.suggest_save_window.place_into()
+
+
+    def click_chose_parametres(self, event, button):
+        self.parameters = []
+        self.dico_parameters = {}
+        filepath = filedialog.askopenfilename(filetypes=[('Data file','.dat'),('CSV file','.csv')])
+        file = open(filepath, 'r')
+
+        self.parameters.append(file.read())
+        self.parameters = self.parameters[0].split('\n')
+        for i in range(len(self.parameters)):
+            self.parameters[i] = self.parameters[i].split(';')
+
+            if len(self.parameters[i]) == 2:
+                self.dico_parameters.update({self.parameters[i][0]:self.parameters[i][1]})
+
+        #print(self.dico_parameters['parametre1'])
+        file.close()
+
+
+        
+                
     def update_loop(self):
-
 
         self.device.update_from_device()
 
@@ -137,9 +185,12 @@ class PowerMeterApp(App):
         self.plot_puissance.append(last, power)
         self.plot_puissance.update_plot()
         
-
         if self.is_refreshing:
             self.after(300, self.update_loop)
+
+    # Modifier la fonction updat_loop pour les valeur de la thermistance
+
+    
         
     def click_save(self, event, button):
         filepath = filedialog.asksaveasfilename(
@@ -148,11 +199,17 @@ class PowerMeterApp(App):
             filetypes=[('Data file','.dat'),('CSV file','.csv')],
         )
         if filepath != "":
-            x,y = self.plot.x, self.plot.y
+            x,y = self.plot_puissance.x, self.plot_puissance.y
             pass # Do something with x,y
 
     def click_clear(self, event, button):
-        self.plot_puissance.clear_plot()
+        #print(self.plot_puissance.x, self.plot_puissance.y)
+        #self.plot_puissance.clear_plot()
+        self.plot_puissance.x = []
+        self.plot_puissance.y = []
+        self.plot_puissance.first_axis.clear()
+        self.plot_puissance.update_plot()
+        #self.x_range = 10
 
 
 class PowerMeterDevice(Bindable):
@@ -171,6 +228,15 @@ class PowerMeterDevice(Bindable):
         self.wavelength = 1064
         self.firmware = None
         self.temperature = None
+
+
+
+    # Fonction pour obtenir la dernière valeur de voltage de la thermistance
+    def get_thermistane_from_device(self):   
+        pass
+
+        # self.power = appel fonction à partir d'aquisition qui retourne une valeur de voltage (la dernière)
+
 
     def get_power_from_device(self):
         if self.debug:

@@ -45,6 +45,5 @@ while True:
         ax.autoscale_view()
         print(mean_value)
         plt.draw()
-        plt.pause(delay)
-    time.sleep(delay)    
-            
+        plt.pause(0.1)
+        time.sleep(0.1)
