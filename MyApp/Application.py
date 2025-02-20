@@ -51,7 +51,10 @@ class PowerMeterApp(App):
         self.quitter = Button("Quitter", user_event_callback=self.Suggest_save)
         self.quitter.place_into(self.window, 1550-Longueur_bouton-Position_row1_X, Position_row1_Y, Longueur_bouton, Hauteur_bouton)
 
-
+        # Barre de progression
+        self.progression = Level(width=300, height=30)
+        self.progression.place_into(self.window, 850, 600, 500, 50)
+        # bindable pour lier l'avancement des fonction avec la barre de progression 
 
 
         # Communication
@@ -136,21 +139,25 @@ class PowerMeterApp(App):
 
         # To Do : Empêcher d'autres action lorsque cette fenêtre est ouverte
 
-        self.suggest_save_window = Window("500x300", 'Sauvegarde')
+        # Autre option : Dialog.showinfo
+        self.Message_enregistrement = Dialog.showwarning( "Souhaitez-vous enregistrer les données de la dernière aquisition avant de quitter ?", "Sauvegarde")
+
+        #Dialog(dialog_type=Warning, title="Sauvegarde", message="Souhaitez-vous enregistrer les données de la dernière aquisition avant de quitter ?", buttons_labels = 'Enregistrer les données', auto_click=(None, None)))
+
+
+
+        #self.Message_enregistrement.bind_properties("reply", self, "reply")
+       
+        #self.suggest_save_window = Window("500x300", 'Sauvegarde')
         #self.suggest_save_window.place_into(self.window, 1000, 300, 500, 300)
         #messagebox.Message('TEST')
-
-        self.avertissemnet = Label("Souhaitez-vous enregistrer les données de la dernière aquisition avant de quitter ?")
-        self.avertissemnet.create_widget(self.suggest_save_window)
-        self.avertissemnet.widget.place(self.suggest_save_window, 0, 150, 100, 50)
-
-
-        self.save_2 = Button("Enregistrer les données", user_event_callback=self.click_save)
-        self.save_2.place_into(self.suggest_save_window, 500,100,500,200)
-
+        #self.avertissemnet = Label("Souhaitez-vous enregistrer les données de la dernière aquisition avant de quitter ?")
+        #self.avertissemnet.create_widget(self.suggest_save_window)
+        #self.avertissemnet.widget.place(self.suggest_save_window, 0, 150, 100, 50)
+        #self.save_2 = Button("Enregistrer les données", user_event_callback=self.click_save)
+        #self.save_2.place_into(self.suggest_save_window, 500,100,500,200)
         #self.Quit_2 = Button("Quitter sans enregistrer les données") # Ajouter fonction pour fermer le programme
         #self.Quit_2.place_into(self.suggest_save_window, 300,100,500,200)
-        
         #self.suggest_save_window.place_into()
 
 
