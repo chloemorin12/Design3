@@ -52,12 +52,17 @@ y = np.linspace(0, 6, 100)
 x,y = np.meshgrid(x, y)
 z = gaussian_2d((x, y), A, x_peak, y_peak, sigma_x, sigma_y, offset)
 
+'''
 plt.imshow(z, origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
 plt.colorbar(label='Temperature (°C)')
 plt.title("Heat Source Localization using Gaussian Fit")
 plt.xlabel("X Position")
 plt.ylabel("Y Position")
 plt.show()
+'''
+
+def data_gradient_temperature():
+    return [x_peak, y_peak, z]
 
 '''
 fig, ax = plt.subplots(figsize=(10, 6))
