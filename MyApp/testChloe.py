@@ -62,7 +62,10 @@ plt.show()
 '''
 
 def data_gradient_temperature():
-    return [x_peak, y_peak, z]
+    return z
+
+def position():
+    return [x_peak, y_peak]
 
 '''
 fig, ax = plt.subplots(figsize=(10, 6))

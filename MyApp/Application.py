@@ -1,8 +1,14 @@
 from mytk import *
 from mytk.indicators import *
+from mytk import Figure
 from tkinter import filedialog, messagebox
 import random
-from testChloe import data_gradient_temperature
+from testChloe import data_gradient_temperature, position
+import matplotlib.pyplot as plt
+import matplotlib, sys
+matplotlib.use('TkAgg')
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 
 class PowerMeterApp(App):
     def __init__(self):
@@ -42,6 +48,10 @@ class PowerMeterApp(App):
 
         self.box2 = Box("Puissance dans le temps")
         self.box2.grid_into(self.window, row=1, column=0, columnspan=1, padx=25, pady=10, sticky="nsew")
+        
+        self.box4 = Box("Position")
+        self.box4.grid_into(self.window, row=1, column=1, columnspan=1, padx=25, pady=10, sticky="nsew")
+
 
 
         #self.puissance_group = View(width=1000, height=300)
@@ -81,8 +91,9 @@ class PowerMeterApp(App):
         #self.plot_position = XYPlot(figsize=(5,4))
         #self.plot_position.grid_into(self.puissance_group, row=0, column=1, pady=15, padx=5)
 
+        # À enlever lorsque la fonction data_gradient_temperature sera fonctionnelle
         self.plot_position = XYPlot(figsize=(5,4))
-        self.plot_position.grid_into(self.window, row=1, column=1, pady=5, padx=5)
+        self.plot_position.grid_into(self.box4, row=0, column=0, pady=5, padx=5)
         
         self.wavelength_entry = LabelledEntry("Wavelength:", character_width=6)
         self.wavelength_entry.grid_into(self.button_group2, row=0, column=0, sticky="e")
@@ -95,6 +106,10 @@ class PowerMeterApp(App):
         self.big_font = tkFont.Font(family='Helvetica', size=size)
         self.measurement_label = Label("--- mW", font=self.big_font)
         self.measurement_label.grid_into(self.box2, row=2, column=0, pady=15, padx=5)
+
+
+        self.position_label = Label("---", font=self.big_font)
+        self.position_label.grid_into(self.box4, row=2, column=0, pady=15, padx=5)
 
         # Quitter l'interface
         # Ajouter pop-up : suggérer sauvegarde des données
@@ -113,6 +128,36 @@ class PowerMeterApp(App):
         self.label_com.grid_into(self.box3, row=0, column=0, columnspan=1, padx=25, pady=10, sticky="nsew")
         #Changer la couleur du box3, ou trouver élément pour communiquer avec l'usager
 
+        
+        #fig = plt.figure(figsize=(5, 4))
+        #ax = fig.add_subplot(111)
+        #ax.imshow(data_gradient_temperature(), origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
+        #self.canvas.draw()
+        #fig.widget.grid(row=0, column=0, pady=15, padx=5)
+
+        #fig = Figure(figsize=(5, 4))
+        #ax = fig.add_subplot(111)
+        #ax.imshow(data_gradient_temperature(), origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
+        #canvas = fig.create_widget(self.window).canvas()
+        #canvas.grid(row=0, column=0, pady=15, padx=5)
+
+        '''
+        Last try
+        fig = Figure(figsize=(5, 4))
+        fig.create_widget(self.box4, data_gradient_temperature)
+        fig.widget.grid(row=0, column=0, pady=15, padx=5)
+        '''
+
+        #plt.colorbar(label='Temperature (°C)')
+        #plt.title("Heat Source Localization using Gaussian Fit")
+        #ax.set_xticklabels(["X Position"])
+        #ax.set_yticklabels(["Y Position"])
+
+        #canvas = FigureCanvasTkAgg(fig, self.window.widget)
+        #canvas.draw()
+        #canvas.get_tk_widget().grid(row=0, column=0, pady=15, padx=5)
+        #canvas.grid_into(self.box4, row=0, column=0, pady=15, padx=5)
+        
 
         '''
         #Place into version
@@ -285,6 +330,7 @@ class PowerMeterApp(App):
 
         power = self.device.power
         self.measurement_label.value_variable.set(f"{power:.2f} mW")
+        self.position_label.value_variable.set(f"(x={position()[0]:.2f}, "f"y={position()[1]:.2f})")
         
         last = len(self.plot_puissance.x)
         self.plot_puissance.append(last, power)
@@ -297,7 +343,6 @@ class PowerMeterApp(App):
         #plt.imshow(last_pos[2], origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
         if self.is_refreshing:
             self.after(300, self.update_loop)
-
 
 
 

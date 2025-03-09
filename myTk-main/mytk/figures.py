@@ -42,6 +42,7 @@ class Figure(Base):
 
     def create_widget(self, master, data_function):
         self.parent = master
+        self.data = data_function
         if self.figure is None:
             self.figure = self.MPLFigure(figsize=self.figsize, dpi=100)
 
