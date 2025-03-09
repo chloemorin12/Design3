@@ -2,7 +2,6 @@ from .base import Base
 from .modulesmanager import ModulesManager
 import importlib
 
-
 class Figure(Base):
 
     def __init__(self, figure=None, figsize=None):
@@ -41,7 +40,7 @@ class Figure(Base):
             ]
         )
 
-    def create_widget(self, master):
+    def create_widget(self, master, data_function):
         self.parent = master
         if self.figure is None:
             self.figure = self.MPLFigure(figsize=self.figsize, dpi=100)
@@ -53,6 +52,12 @@ class Figure(Base):
             self.canvas, master, pack_toolbar=False
         )
         self.toolbar.update()
+
+        # Modification 
+        fig = self.figure
+        ax = fig.add_subplot(111)
+        ax.imshow(data_function(), origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
+        self.canvas.draw()
 
     @property
     def figure(self):
