@@ -1,4 +1,5 @@
 from mytk import *
+#from mytk.figures import HeatMap
 from mytk.indicators import *
 from mytk import Figure
 from tkinter import filedialog, messagebox
@@ -33,6 +34,7 @@ class PowerMeterApp(App):
         intersite_Y = 15
 
 
+        self.Évènements = [] # Liste des communications à enregistrer dans un fichier
 
         # GRID version
         
@@ -111,10 +113,15 @@ class PowerMeterApp(App):
         self.position_label = Label("---", font=self.big_font)
         self.position_label.grid_into(self.box4, row=2, column=0, pady=15, padx=5)
 
+        self.save_button = Button("Save data…", user_event_callback=self.click_save)
+        self.save_button.grid_into(self.box, row=0, column=6, padx=10, pady=10)
+
+        
         # Quitter l'interface
         # Ajouter pop-up : suggérer sauvegarde des données
         self.quitter = Button("Quitter", user_event_callback=self.Suggest_save)
         self.quitter.grid_into(self.box, row=0, column=5, pady=15, padx=5)
+
 
         # Barre de progression
         self.progression = Level(width=300, height=30)
@@ -124,9 +131,14 @@ class PowerMeterApp(App):
         # Communication
         self.box3 = Box("Communication")
         self.box3.grid_into(self.autre, row=0, column=0, columnspan=1, padx=25, pady=10, sticky="nsew")
-        self.label_com = Label('Communication')
+        self.label_com = Label('')
         self.label_com.grid_into(self.box3, row=0, column=0, columnspan=1, padx=25, pady=10, sticky="nsew")
         #Changer la couleur du box3, ou trouver élément pour communiquer avec l'usager
+
+
+        #heatmap = HeatMap(figsize=(5, 4))
+        #heatmap.create_widget(self.box4, data_gradient_temperature)
+        #heatmap.widget.grid(row=0, column=0, pady=15, padx=5)
 
         
         #fig = plt.figure(figsize=(5, 4))
@@ -134,12 +146,6 @@ class PowerMeterApp(App):
         #ax.imshow(data_gradient_temperature(), origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
         #self.canvas.draw()
         #fig.widget.grid(row=0, column=0, pady=15, padx=5)
-
-        #fig = Figure(figsize=(5, 4))
-        #ax = fig.add_subplot(111)
-        #ax.imshow(data_gradient_temperature(), origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
-        #canvas = fig.create_widget(self.window).canvas()
-        #canvas.grid(row=0, column=0, pady=15, padx=5)
 
         '''
         Last try
@@ -240,8 +246,6 @@ class PowerMeterApp(App):
 
 
         
-        #self.save_button = Button("Save data…", user_event_callback=self.click_save)
-        #self.save_button.grid_into(self.box, row=0, column=3, padx=10, pady=10)
         #self.clear_button = Button("Mise à zéro", user_event_callback=self.click_clear)
         #self.clear_button.grid_into(self.box, row=0, column=5, padx=10, pady=10)
         '''
@@ -262,13 +266,25 @@ class PowerMeterApp(App):
         self.update_loop() # We update once at least
 
     def click_start(self, event, button):
+
         if not self.is_refreshing:
             self.is_refreshing = True
             self.update_loop()
             button.label = "Arrêter"
+            # Historique communication
+            self.label_com.value_variable.set('La prise de donnée est en cours')
+            self.Évènements.append('La prise de donnée est en cours')
+            
         else:
             self.is_refreshing = False
             button.label = "Démarrer"
+            # Historique communication
+            self.label_com.value_variable.set('La prise de donnée est mise en pause')
+            self.Évènements.append('La prise de donnée est mise en pause')
+
+    #def communication(self, étape):
+    #    if étape == 'start':
+    #        print('Démarrage')
 
     '''
     def window_size(self):
@@ -285,7 +301,29 @@ class PowerMeterApp(App):
         # To Do : Empêcher d'autres action lorsque cette fenêtre est ouverte
 
         # Autre option : Dialog.showinfo
-        self.Message_enregistrement = Dialog.showwarning( "Souhaitez-vous enregistrer les données de la dernière aquisition avant de quitter ?", "Sauvegarde")
+        self.Message = Dialog(dialog_type='warning' ,title="Sauvegarde", message = "Souhaitez-vous enregistrer les données de la dernière aquisition avant de quitter ?", buttons_labels= ['Save', 'Cancel', 'Quit without saving'])
+        
+        #print(self.Message.buttons)
+        #print(self.Message.buttons_labels)
+        #self.Message_enregistrement = Dialog.showwarning( "Souhaitez-vous enregistrer les données de la dernière aquisition avant de quitter ?", "Sauvegarde") # auto_click=('Save', 'cancel'))
+        #self.Message.button_labels = ['Enregistrer les données', 'Quitter sans enregistrer les données']
+        #self.wid = self.Message.create_widget(self.window)
+        #self.wid.title = "Sauvegarde"
+        
+        #self.Message_enregistrement.create_behavior_buttons()
+        #Dialog(dialog_type=NONE ,title='test', message = 'save?', buttons_labels=['Save', 'Cancel', 'Quit without saving'])
+        
+        
+        #(dialog_type=NONE ,title='test', message = 'save?', buttons_labels=['Save', 'Cancel', 'Quit without saving']) 
+
+
+
+        #self.Message_enregistrement.
+        
+        #self.Message_replies = self.Message_enregistrement.Replies( 
+        # auto_click = save, timout = go
+        #dialog() : méthode button_labels = []
+
 
         #Dialog(dialog_type=Warning, title="Sauvegarde", message="Souhaitez-vous enregistrer les données de la dernière aquisition avant de quitter ?", buttons_labels = 'Enregistrer les données', auto_click=(None, None)))
 
@@ -321,6 +359,8 @@ class PowerMeterApp(App):
                 self.dico_parameters.update({self.parameters[i][0]:self.parameters[i][1]})
 
         print(self.dico_parameters['parametre1'])
+        self.label_com.value_variable.set('Le fichier de paramètres '+ filepath + ' a été chargé')
+        self.Évènements.append('Le fichier de paramètres '+ filepath + ' a été chargé')
         file.close()
         
                 
@@ -351,14 +391,25 @@ class PowerMeterApp(App):
     
         
     def click_save(self, event, button):
+        print(self.Évènements)
         filepath = filedialog.asksaveasfilename(
             parent=self.window.widget,
             title="Choisissez un nom de fichier:",
             filetypes=[('Data file','.dat'),('CSV file','.csv')],
         )
+        
         if filepath != "":
             x,y = self.plot_puissance.x, self.plot_puissance.y # données à enregistrer + time stamp + position?
-            pass # Do something with x,y
+            pass # Do something with x,
+
+        # Historique des actions à enregistrer dans un fichier
+        filepath_action = filepath + '_actions'
+
+        if filepath_action != "":
+            print(filepath)
+            with open(filepath_action, 'w') as file:
+                for i in range(len(self.Évènements)):
+                    file.write(self.Évènements[i] + '\n')
 
 
 
@@ -369,6 +420,12 @@ class PowerMeterApp(App):
         self.plot_puissance.y = []
         self.plot_puissance.first_axis.clear()
         self.plot_puissance.update_plot()
+
+        # Historique communication
+        self.label_com.value_variable.set('Mise à zéro effectuée')
+        self.Évènements.append('Mise à zéro effectuée')
+
+        
         #self.x_range = 10
 
 
