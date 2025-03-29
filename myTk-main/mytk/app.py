@@ -141,6 +141,8 @@ class App(Bindable):
     def after_cancel_all(self):
         self.after_cancel_many(self.scheduled_tasks)
 
+
+    # Modifier pour sugérer la sauvegarde
     def quit(self):
         if self.is_running:
             self.after_cancel_all()

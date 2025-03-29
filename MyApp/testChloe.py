@@ -28,7 +28,7 @@ coefficients = (1.40e-3, 2.37e-4, 9.90e-8)
 resistance = 10000  # ohms
 temperature_kelvin = steinhart_hart_resistance_to_temperature(resistance, coefficients)
 print(f"Temperature: {temperature_kelvin} K")
-print('hummmmmm', VoltageToResistance(0.779,22000,2.5,43000))
+#print('hummmmmm', VoltageToResistance(0.779,22000,2.5,43000))
 
 
 

@@ -9,13 +9,24 @@ import matplotlib.pyplot as plt
 import matplotlib, sys
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from datetime import datetime
 
 
 class PowerMeterApp(App):
     def __init__(self):
         App.__init__(self)
 
+        
+        self.ct = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.historique_puissance = []
+        self.historique_temps_mesure = []
+        self.historique_position_x = []
+        self.historique_position_y = []
+
+
+
         self.window.widget.title("Powermeter")
+        
 
         #self.window.row_resize_weight(0,0) 
         #self.window.row_resize_weight(1,0)
@@ -34,7 +45,7 @@ class PowerMeterApp(App):
         intersite_Y = 15
 
 
-        self.Évènements = [] # Liste des communications à enregistrer dans un fichier
+        self.Évènements = ['', '', '', ''] # Liste des communications à enregistrer dans un fichier
 
         # GRID version
         
@@ -43,6 +54,9 @@ class PowerMeterApp(App):
 
         self.button_group2 = View(width=90, height=200)
         self.button_group2.grid_into(self.window, row=0, column=1, pady=5, padx=5, sticky="nsew")
+
+        self.box_longueur_onde = Box("Longueur d'onde")
+        self.box_longueur_onde.grid_into(self.window, row=0, column=1, columnspan=1, padx=5, pady=5, sticky="nsew")
 
         self.box = Box("Actions")
         self.box.grid_into(self.window, row=0, column=0, columnspan=1, padx=25, pady=10, sticky="nsew")
@@ -95,6 +109,8 @@ class PowerMeterApp(App):
 
         # À enlever lorsque la fonction data_gradient_temperature sera fonctionnelle
         self.plot_position = XYPlot(figsize=(5,4))
+        #self.plot_position.axes = 'Y'
+        #self.plot_position.first_axis.set_y
         self.plot_position.grid_into(self.box4, row=0, column=0, pady=5, padx=5)
         
         self.wavelength_entry = LabelledEntry("Wavelength:", character_width=6)
@@ -113,27 +129,33 @@ class PowerMeterApp(App):
         self.position_label = Label("---", font=self.big_font)
         self.position_label.grid_into(self.box4, row=2, column=0, pady=15, padx=5)
 
-        self.save_button = Button("Save data…", user_event_callback=self.click_save)
-        self.save_button.grid_into(self.box, row=0, column=6, padx=10, pady=10)
+        self.save_button = Button("Enregister les données", user_event_callback=self.click_save)
+        self.save_button.grid_into(self.box, row=0, column=5, padx=10, pady=10)
 
         
-        # Quitter l'interface
+        # Quitter l'interface: Voir directement dans dans app.py quit()
         # Ajouter pop-up : suggérer sauvegarde des données
-        self.quitter = Button("Quitter", user_event_callback=self.Suggest_save)
-        self.quitter.grid_into(self.box, row=0, column=5, pady=15, padx=5)
-
-
-        # Barre de progression
-        self.progression = Level(width=300, height=30)
-        self.progression.grid_into(self.window, row=2, column=1, pady=15, padx=5)
-        # bindable pour lier l'avancement des fonction avec la barre de progression 
+        #self.quitter = Button("Quitter", user_event_callback=self.Suggest_save)
+        #self.quitter.grid_into(self.box, row=0, column=6, pady=15, padx=5)
 
         # Communication
         self.box3 = Box("Communication")
         self.box3.grid_into(self.autre, row=0, column=0, columnspan=1, padx=25, pady=10, sticky="nsew")
-        self.label_com = Label('')
+        self.Évènements.append(self.get_time() + ' : ' + 'Démarrage Interface')
+        self.label_com = Label(self.get_time() + ' : ' + 'Démarrage Interface')
         self.label_com.grid_into(self.box3, row=0, column=0, columnspan=1, padx=25, pady=10, sticky="nsew")
         #Changer la couleur du box3, ou trouver élément pour communiquer avec l'usager
+
+        # Barre de progression
+        self.progression = Level(width=800, height=30)
+        self.progression.grid_into(self.window, row=3, column=0, pady=25, padx=15)
+        # bindable pour lier l'avancement des fonction avec la barre de progression 
+
+    
+
+
+
+
 
 
         #heatmap = HeatMap(figsize=(5, 4))
@@ -163,77 +185,6 @@ class PowerMeterApp(App):
         #canvas.draw()
         #canvas.get_tk_widget().grid(row=0, column=0, pady=15, padx=5)
         #canvas.grid_into(self.box4, row=0, column=0, pady=15, padx=5)
-        
-
-        '''
-        #Place into version
-
-        self.start_button = Button("Démarrer", user_event_callback=self.click_start)
-        self.start_button.place_into(self.window, Position_row1_X+intersite_X+50, Position_row1_Y, Longueur_bouton, Hauteur_bouton)
-        #self.start_button.grid_into(self.button_group, row=0, column=0, pady=5, padx=5)
-        #self.stop_button = Button("Arrêter") #, user_event_callback=self.click_start)
-        #self.stop_button.place_into(self.window, Position_row1_X+intersite_X+Longueur_bouton, Position_row1_Y, Longueur_bouton, Hauteur_bouton)
-
-        # Mise à zéro : Initialisation prise de donnée ? Détecte si la température est trop élevée ?
-        self.misea0 = Button("Mise à zéro", user_event_callback=self.click_clear)
-        self.misea0.place_into(self.window, Position_row1_X+2*(intersite_X+Longueur_bouton), Position_row1_Y, Longueur_bouton, Hauteur_bouton)
-
-        # Paramètre : Permet d'aller choisir un fichier avec les valeurs ?
-        self.paramètre = Button("Paramètres", user_event_callback=self.click_chose_parametres)
-        self.paramètre.place_into(self.window, Position_row1_X+3*(intersite_X+Longueur_bouton), Position_row1_Y, Longueur_bouton, Hauteur_bouton)
-        
-        # Connexion : Permet de se connecter en un clic peut importe le port de connexion utilisé
-        # Ouverture d'une autre fenêtre ?  radiobutton
-        self.connexion = Button("Connexion")
-        self.connexion.place_into(self.window, Position_row1_X+4*(intersite_X+Longueur_bouton), Position_row1_Y, Longueur_bouton, Hauteur_bouton)
-
-        # Enregistrement des données
-        self.register = Button("Enregistrer", user_event_callback=self.click_save)
-        self.register.place_into(self.window, Position_row1_X+5*(intersite_X+Longueur_bouton), Position_row1_Y, Longueur_bouton, Hauteur_bouton)
-
-        # Quitter l'interface
-        # Ajouter pop-up : suggérer sauvegarde des données
-        self.quitter = Button("Quitter", user_event_callback=self.Suggest_save)
-        self.quitter.place_into(self.window, 1550-Longueur_bouton-Position_row1_X, Position_row1_Y, Longueur_bouton, Hauteur_bouton)
-
-        # Barre de progression
-        self.progression = Level(width=300, height=30)
-        self.progression.place_into(self.window, 850, 600, 500, 50)
-        # bindable pour lier l'avancement des fonction avec la barre de progression 
-
-
-        # Communication
-        self.com = Entry("")
-        self.com.place_into(self.window, intersite_X, 625, 810, 125)
-        self.label_com = Label('Communication')
-        self.label_com.place_into(self.window, intersite_X, 600-25, 200, 50)
-
-        self.running_indicator = BooleanIndicator(diameter=25)
-        self.running_indicator.place_into(self.window, Position_row1_X, Position_row1_Y,45,45)
-
-        # Graphique puissance dans le temps
-        self.plot_puissance = XYPlot(figsize=(6,5))
-        self.plot_puissance.place_into(self.window, Position_row1_X, Position_row1_Y+intersite_Y+Hauteur_bouton, 810, 425)
-        #self.plot_puissance.append(0,0) # maybe not
-        #self.plot.axes.setter("xlabel", "Time (s)") # Revoir
-
-        # Graphique position
-        self.plot_position = XYPlot(figsize=(6,4))
-        self.plot_position.place_into(self.window, Position_row1_X+810+intersite_X, Position_row1_Y+intersite_Y+Hauteur_bouton, 675, 425)
-        #self.plot_position.append(0,0)
-        #self.plot.axes.setter("xlabel", "Time (s)") # Revoir
-        
-        # Affichage Puissance
-        size = 30
-        self.bigb_font = tkFont.Font(family='Helvetica', size=size, weight='bold')
-        self.big_font = tkFont.Font(family='Helvetica', size=size)
-        self.measurement_label = Label("--- mW", font=self.big_font)
-        self.measurement_label.place_into(self.window, Position_row1_X+250, Position_row1_Y+425+2*intersite_Y, 500, 100)
-
-            
-
-
-        '''
 
 
 
@@ -265,6 +216,9 @@ class PowerMeterApp(App):
         
         self.update_loop() # We update once at least
 
+    def get_time(self):
+        return(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
     def click_start(self, event, button):
 
         if not self.is_refreshing:
@@ -272,15 +226,27 @@ class PowerMeterApp(App):
             self.update_loop()
             button.label = "Arrêter"
             # Historique communication
-            self.label_com.value_variable.set('La prise de donnée est en cours')
-            self.Évènements.append('La prise de donnée est en cours')
+            self.Évènements.append(self.get_time() + ' : '+'La prise de donnée est en cours')
+            #self.label_com.value_variable.set(self.get_time() + ' : '+'La prise de donnée est en cours')
+            self.label_com.value_variable.set(self.Évènements[len(self.Évènements)-1]
+                                          + '\n' + self.Évènements[len(self.Évènements)-2]
+                                          + '\n' + self.Évènements[len(self.Évènements)-3]
+                                          + '\n' + self.Évènements[len(self.Évènements)-4]
+                                          + '\n' + self.Évènements[len(self.Évènements)-5]) 
+           
             
         else:
             self.is_refreshing = False
             button.label = "Démarrer"
             # Historique communication
-            self.label_com.value_variable.set('La prise de donnée est mise en pause')
-            self.Évènements.append('La prise de donnée est mise en pause')
+            self.Évènements.append(self.get_time()+ ' : '+'La prise de donnée est mise en pause')
+            #self.label_com.value_variable.set(self.get_time()+ ' : '+'La prise de donnée est mise en pause')
+            self.label_com.value_variable.set(self.Évènements[len(self.Évènements)-1]
+                                          + '\n' + self.Évènements[len(self.Évènements)-2]
+                                          + '\n' + self.Évènements[len(self.Évènements)-3]
+                                          + '\n' + self.Évènements[len(self.Évènements)-4]
+                                          + '\n' + self.Évènements[len(self.Évènements)-5]) 
+            
 
     #def communication(self, étape):
     #    if étape == 'start':
@@ -359,21 +325,35 @@ class PowerMeterApp(App):
                 self.dico_parameters.update({self.parameters[i][0]:self.parameters[i][1]})
 
         print(self.dico_parameters['parametre1'])
-        self.label_com.value_variable.set('Le fichier de paramètres '+ filepath + ' a été chargé')
-        self.Évènements.append('Le fichier de paramètres '+ filepath + ' a été chargé')
+        self.Évènements.append(self.get_time() + ' : '+'Le fichier de paramètres '+ filepath + ' a été chargé')
+        #self.label_com.value_variable.set(self.get_time() + ' : '+'Le fichier de paramètres '+ filepath + ' a été chargé')
+        self.label_com.value_variable.set(self.Évènements[len(self.Évènements)-1]
+                                          + '\n' + self.Évènements[len(self.Évènements)-2]
+                                          + '\n' + self.Évènements[len(self.Évènements)-3]
+                                          + '\n' + self.Évènements[len(self.Évènements)-4]
+                                          + '\n' + self.Évènements[len(self.Évènements)-5]) 
+       
         file.close()
         
                 
+
     def update_loop(self):
 
+        
         self.device.update_from_device()
 
         power = self.device.power
+        self.historique_temps_mesure.append(self.get_time())
+        self.historique_position_x.append(position()[0])      # modifier pour données en temps réel
+        self.historique_position_y.append(position()[1])      # modifier pour données en temps réel
+
         self.measurement_label.value_variable.set(f"{power:.2f} mW")
         self.position_label.value_variable.set(f"(x={position()[0]:.2f}, "f"y={position()[1]:.2f})")
-        
+        #self.plot_position.first_axis
+
         last = len(self.plot_puissance.x)
         self.plot_puissance.append(last, power)
+        self.historique_puissance.append(power)    
         self.plot_puissance.update_plot()
 
         last_pos = data_gradient_temperature()
@@ -391,7 +371,7 @@ class PowerMeterApp(App):
     
         
     def click_save(self, event, button):
-        print(self.Évènements)
+
         filepath = filedialog.asksaveasfilename(
             parent=self.window.widget,
             title="Choisissez un nom de fichier:",
@@ -399,14 +379,17 @@ class PowerMeterApp(App):
         )
         
         if filepath != "":
-            x,y = self.plot_puissance.x, self.plot_puissance.y # données à enregistrer + time stamp + position?
+            with open(filepath, 'w') as file:
+                file.write('Temps' + '' +  'Puissance' + '' + 'Position_X' + '' + 'Position_Y' + '' +  '\n')
+                for i in range(len(self.historique_puissance)):
+                    file.write((str(self.historique_temps_mesure[i]) + ' ' + str(self.historique_puissance[i])) + ' ' + str(self.historique_position_x[i]) +  str(self.historique_position_y[i])  + '\n')
+            
             pass # Do something with x,
 
         # Historique des actions à enregistrer dans un fichier
         filepath_action = filepath + '_actions'
 
         if filepath_action != "":
-            print(filepath)
             with open(filepath_action, 'w') as file:
                 for i in range(len(self.Évènements)):
                     file.write(self.Évènements[i] + '\n')
@@ -422,9 +405,14 @@ class PowerMeterApp(App):
         self.plot_puissance.update_plot()
 
         # Historique communication
-        self.label_com.value_variable.set('Mise à zéro effectuée')
-        self.Évènements.append('Mise à zéro effectuée')
-
+        self.Évènements.append(self.get_time()+ ' : '+'Mise à zéro effectuée')
+        self.label_com.value_variable.set(self.Évènements[len(self.Évènements)-1]
+                                          + '\n' + self.Évènements[len(self.Évènements)-2]
+                                          + '\n' + self.Évènements[len(self.Évènements)-3]
+                                          + '\n' + self.Évènements[len(self.Évènements)-4]
+                                          + '\n' + self.Évènements[len(self.Évènements)-5]) 
+        #self.label_com.value_variable.set(self.get_time()+ ' : '+'Mise à zéro effectuée')
+        
         
         #self.x_range = 10
 

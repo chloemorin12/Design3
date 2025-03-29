@@ -328,7 +328,7 @@ class HeatMap(Figure):
     def create_widget(self, master, data_function, **kwargs, ):
         super().create_widget(master, *kwargs)
 
-        self.data = data_function
+        self.data = data_function()
 
         fig = self.figure
         ax = fig.add_subplot(111)
@@ -342,4 +342,4 @@ class HeatMap(Figure):
         # with plt.style.context(self.style):
         #self.first_axis.plot(self.x, self.y, "k-")
         #self.figure.canvas.draw()
-        #self.figure.canvas.flush_events()
+        #self.figure.canvas.flush_events()'
