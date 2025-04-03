@@ -10,6 +10,7 @@ from tkinter import TclError
 import pyperclip
 
 
+
 class App(Bindable):
     app = None
 
@@ -24,6 +25,7 @@ class App(Bindable):
         self.scheduled_tasks = []
         App.app = self
 
+
     @property
     def root(self):
         return self.window.widget
@@ -31,7 +33,8 @@ class App(Bindable):
     @property
     def is_running(self):
         return self.root is not None
-
+    
+    
     def check_requirements(self):
         mac_version = platform.mac_ver()[0]
         python_version = platform.python_version()
@@ -41,11 +44,10 @@ class App(Bindable):
                 message="It is recommended to use Python 3.12 on macOS 14 (Sonoma) with Tk.  If not, you will need to move the mouse while holding the button to register the click."
             )
 
-    def mainloop(self):
-        self.window.widget.mainloop()
-
     def create_menu(self):
         root = self.window.widget
+        root.protocol("WM_DELETE_WINDOW", self.window.on_close("Save Data", "Do you want to save the collected data before quitting?"))
+
         menubar = Menu(root)
 
         appmenu = Menu(menubar, name="apple")
@@ -141,8 +143,7 @@ class App(Bindable):
     def after_cancel_all(self):
         self.after_cancel_many(self.scheduled_tasks)
 
-
-    # Modifier pour sugérer la sauvegarde
+    # orgignial version
     def quit(self):
         if self.is_running:
             self.after_cancel_all()
@@ -150,3 +151,19 @@ class App(Bindable):
                 with redirect_stdout(io.StringIO()):
                     self.window.widget.destroy()
                     self.window.widget = None
+    
+    '''
+    def on_close(self):
+        """
+        Handle the close button click event.
+        Suggest saving data before quitting.
+        """
+        if Dialog.askyesnocancel(
+            title="Save Data",
+            message="Do you want to save the collected data before quitting?",
+        ):
+            self.save()  # Call the save method (to be implemented in the derived class)
+        elif Dialog.Replies.No:
+            self.quit()  # Quit without saving
+        # If the user cancels, do nothing
+    '''

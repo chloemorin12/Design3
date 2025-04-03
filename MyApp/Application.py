@@ -10,6 +10,7 @@ import matplotlib, sys
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from datetime import datetime
+from tkinter.messagebox import askyesno
 
 
 class PowerMeterApp(App):
@@ -369,7 +370,13 @@ class PowerMeterApp(App):
     # Modifier la fonction updat_loop pour les valeur de la thermistance
 
     
-        
+
+    #def confirm (self, event, button):
+    #    ans = askyesno(title='Confirmation', message='Voulez-vous vraiment quitter ?')
+    #    if ans:
+    #        self.quit()
+
+
     def click_save(self, event, button):
 
         filepath = filedialog.asksaveasfilename(
@@ -415,7 +422,19 @@ class PowerMeterApp(App):
         
         
         #self.x_range = 10
-
+    '''
+    def save(self):
+        # Implement the logic to save the collected data
+        filepath = filedialog.asksaveasfilename(
+            title="Save Data",
+            filetypes=[("CSV Files", "*.csv"), ("All Files", "*.*")]
+        )
+        if filepath:
+            with open(filepath, "w") as file:
+                # Write the collected data to the file
+                file.write("Collected data goes here")
+            Dialog.showinfo(title="Save Successful", message="Data saved successfully!")
+    '''
 
 class PowerMeterDevice(Bindable):
     debug = True
