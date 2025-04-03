@@ -18,7 +18,9 @@ class PowerMeterApp(App):
     def __init__(self):
         App.__init__(self)
 
-        
+        self.device = PowerMeterDevice()
+        self.is_refreshing = False
+
         self.ct = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.historique_puissance = []
         self.historique_temps_mesure = []
@@ -81,6 +83,9 @@ class PowerMeterApp(App):
 
 
 
+        # ajouter fonction zoomed in ? + save graph as is  (TO DO)
+        # http://pythonguis.com/tutorials/plotting-matplotlib/
+
         # Graphique de puissance
         self.graphs_frame = tk.Frame(self.tab_puissance)
         self.graphs_frame.grid(row=1, column=0, columnspan=3, sticky="ew", padx=10, pady=5)
@@ -107,7 +112,7 @@ class PowerMeterApp(App):
         
         fig = plt.figure(figsize=(5, 4))
         self.ax = fig.add_subplot(111)
-        self.ax.imshow(data_gradient_temperature(), origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
+        self.ax.imshow(data_gradient_temperature(self.device.get_temperature_from_device()), origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
         
         self.pos_canvas = FigureCanvasTkAgg(fig, master=self.pos_frame)
         self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
@@ -168,8 +173,7 @@ class PowerMeterApp(App):
         #self.firmware_label = Label()
         #self.firmware_label.grid_into(self.window, row=3, column=0, columnspan=3, padx=25, pady=10, sticky="w")
         
-        self.device = PowerMeterDevice()
-        self.is_refreshing = False
+        
 
         #self.device.bind_properties("wavelength", self.wavelength_entry.entry, "value_variable")
         #self.device.bind_properties("firmware", self.firmware_label, "value_variable")
@@ -251,10 +255,10 @@ class PowerMeterApp(App):
        
         file.close()
         
-    def power_values(self):
-        self.device = PowerMeterDevice()
-        self.device.update_from_device()
-        return self.device.power
+    #def power_values(self):
+    #    self.device = PowerMeterDevice()
+    #    self.device.update_from_device()
+    #    return self.device.power
     
     def update_plot(self):
         # with plt.style.context(self.style):
@@ -264,20 +268,26 @@ class PowerMeterApp(App):
         self.canvas.draw()
         self.canvas.flush_events()
 
+        self.ax.cla()  # Clears the axes
+        self.ax.imshow(data_gradient_temperature(self.device.get_temperature_from_device()), origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
+        self.pos_canvas.draw()
+        self.pos_canvas.flush_events()
+
     def update_loop(self):
 
         self.device.update_from_device()
 
         power = self.device.power
+        thermistor_values = self.device.get_temperature_from_device()
 
         self.historique_temps_mesure.append(self.get_time())
-        self.historique_position_x.append(position()[0])      # modifier pour données en temps réel
-        self.historique_position_y.append(position()[1])      # modifier pour données en temps réel
+        self.historique_position_x.append(position(thermistor_values)[0])      # modifier pour données en temps réel
+        self.historique_position_y.append(position(thermistor_values)[1])      # modifier pour données en temps réel
         self.historique_puissance.append(power)    
         self.update_plot()
 
         self.measurement_label.config(text=f"{power:.2f} mW")
-        self.position_label.config(text=f"(x={position()[0]:.2f}, "f"y={position()[1]:.2f})")
+        self.position_label.config(text=f"(x={position(thermistor_values)[0]:.2f}, "f"y={position(thermistor_values)[1]:.2f})")
        
 
         #last_pos = data_gradient_temperature()
@@ -365,7 +375,7 @@ class PowerMeterDevice(Bindable):
         self.power = 0
         self.wavelength = 1064
         self.firmware = None
-        self.temperature = None
+        self.temperature = []
 
 
 
@@ -393,12 +403,17 @@ class PowerMeterDevice(Bindable):
         return self.power
 
     def get_temperature_from_device(self):
+
+        # self.temperature permet d'avoir la température de toutes les termistance (avant implantation aquisition)
+        #self.temperature = [70,71,72,73,74,75,76,77,70] #[random.randrange(90,113,1), random.randrange(60,73,1),random.randrange(50,80,1),random.randrange(70,73,1),random.randrange(70,73,1),74,75, 76,70]  
+        #print(self.temperature)
+        #print(type(self.temperature))
         if self.debug:
-            self.temperature = random.randrange(70,73,1)
+            self.temperature = [random.randrange(70,73,1), random.randrange(70,73,1),random.randrange(70,73,1),random.randrange(70,73,1),random.randrange(70,73,1),72,74, 72,70]  
         else:
             pass # Update via USB
 
-        return self.power
+        return self.temperature
 
     def get_wavelength_from_device(self):
         if self.debug:
