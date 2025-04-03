@@ -3,6 +3,94 @@ import numpy as np
 import scipy.optimize
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import pandas as pd
+
+
+
+file_path = r"C:\Users\chloe\echellon.xlsx"
+df = pd.read_excel(file_path)
+
+thermistance = df.iloc[:, :9]
+ref = df.iloc[:, 9]
+#t = df.iloc[:, 10]
+t = pd.to_numeric(df.iloc[:, 10], errors='coerce')
+thermistance = thermistance.apply(lambda col: col -ref, axis=0)
+
+
+# paramètre de la fonction de transfert (2e ordre)
+a_0 = 530084
+b_0 = -1060164
+c_0 = 0.4
+d_0 = 64935
+
+k = 0.5
+tau = 5/11
+
+def puissance_calcul(temps, te):
+
+
+    puissance = []
+
+    # Modifier selon le profil de température
+    #moyenne différence temp pour avoir énergie
+    for i in range(2, len(temps)):
+        E = temps.iloc[i, :9].mean()
+        dt = te.iloc[i] - te.iloc[i-1]
+        dE = (temps.iloc[i, :9].mean() - temps.iloc[i-1, :9].mean())/dt
+
+        # 2e ordre
+        # T_k = temps.iloc[k].mean()
+        # T_k_1 = temps.iloc[k-1].mean()
+        # T_k_2 = temps.iloc[k-2].mean()
+        # Fctn_de_transfert 2e ordre
+        #P_t = a_0*T_k + b_0*T_k_1 + c_0*T_k_2 + d_0
+
+        P_t = E/k + (tau/k)*dE
+        puissance.append(P_t)
+
+    puissance = [np.nan, np.nan] + puissance
+    return puissance
+    
+df['Puissance'] = puissance_calcul(thermistance, t)
+
+output_file = 'thermistance_echellon_with_puissance.xlsx'
+df.to_excel(output_file, index=False)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def VoltageToResistance(voltage, R2, gain, R4):
