@@ -3,6 +3,7 @@ import numpy as np
 import scipy.optimize
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import pandas as pd
 
 
 def VoltageToResistance(voltage, R2, gain, R4):
@@ -32,20 +33,33 @@ print('hummmmmm', VoltageToResistance(0.779,22000,2.5,43000))
 
 
 
+def get_position_v1(array_thermistor):
+    thermistor_positions = np.array([
+        [0, 2], [1, 3], [2, 4], [3, 3], [4, 2],[1, 1], [2, 2], [3, 1],[2, 0]])
+    temperature_values = np.array(array_thermistor)
 
-thermistor_positions = np.array([
-    [0, 2], [1, 3], [2, 4], [3, 3], [4, 2],[1, 1], [2, 2], [3, 1],[2, 0]])
-temperature_values = np.array([21, 24, 30, 27, 70, 26, 35, 28, 23])
+
+    x_data = thermistor_positions[:, 0]
+    y_data = thermistor_positions[:, 1]
+    z_data = temperature_values
+
+    initial_guess = [np.max(z_data), np.mean(x_data), np.mean(y_data), 1, 1, np.min(z_data)]
+    params, _ = scipy.optimize.curve_fit(gaussian_2d, (x_data, y_data), z_data, p0=initial_guess)
+    A, x_peak, y_peak, sigma_x, sigma_y, offset = params
+    print(f"Estimated heat peak at: ({x_peak:.2f}, {y_peak:.2f})")
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    scatter = ax.scatter(x_data, y_data, c=z_data, cmap='coolwarm', marker='o', label='Thermistor Readings')
+    ax.scatter(x_peak, y_peak, c='black', marker='x', s=30, label="Estimated Heat Source")
+    ax.set_xlabel("X Position")
+    ax.set_ylabel("Y Position")
+    ax.set_title("Heat Source Localization using Gaussian Fit")
+    ax.legend()
+    cbar = plt.colorbar(scatter, ax=ax)
+    cbar.set_label('Temperature (°C)')
+    plt.show()
 
 
-x_data = thermistor_positions[:, 0]
-y_data = thermistor_positions[:, 1]
-z_data = temperature_values
-
-initial_guess = [np.max(z_data), np.mean(x_data), np.mean(y_data), 1, 1, np.min(z_data)]
-params, _ = scipy.optimize.curve_fit(gaussian_2d, (x_data, y_data), z_data, p0=initial_guess)
-A, x_peak, y_peak, sigma_x, sigma_y, offset = params
-print(f"Estimated heat peak at: ({x_peak:.2f}, {y_peak:.2f})")
 
 fig, ax = plt.subplots(figsize=(10, 6))
 scatter = ax.scatter(x_data, y_data, c=z_data, cmap='coolwarm', marker='o', label='Thermistor Readings')
@@ -71,3 +85,4 @@ plt.title("Heat Source Localization using Gaussian Fit")
 plt.xlabel("X Position")
 plt.ylabel("Y Position")
 plt.show()
+

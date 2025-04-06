@@ -2,7 +2,6 @@ from .base import Base
 from .modulesmanager import ModulesManager
 import importlib
 
-
 class Figure(Base):
 
     def __init__(self, figure=None, figsize=None):
@@ -53,6 +52,12 @@ class Figure(Base):
             self.canvas, master, pack_toolbar=False
         )
         self.toolbar.update()
+
+        # Modification 
+        #fig = self.figure
+        #ax = fig.add_subplot(111)
+        #ax.imshow(data_function(), origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
+        #self.canvas.draw()
 
     @property
     def figure(self):
@@ -314,3 +319,27 @@ class Histogram(Figure):
             self.first_axis.set_yticks([])
             self.figure.canvas.draw()
             self.figure.canvas.flush_events()
+
+
+class HeatMap(Figure):
+    def __init__(self, figsize):
+        super().__init__(figsize=figsize)
+
+    def create_widget(self, master, data_function, **kwargs, ):
+        super().create_widget(master, *kwargs)
+
+        self.data = data_function()
+
+        fig = self.figure
+        ax = fig.add_subplot(111)
+        ax.imshow(self.data, origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
+        self.canvas.draw()
+
+        self.update_plot()
+
+    def update_plot(self):
+        print('create widget works')
+        # with plt.style.context(self.style):
+        #self.first_axis.plot(self.x, self.y, "k-")
+        #self.figure.canvas.draw()
+        #self.figure.canvas.flush_events()'
