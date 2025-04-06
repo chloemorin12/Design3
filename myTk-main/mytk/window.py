@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import filedialog
 import tkinter.ttk as ttk
 import tkinter.font as tkFont
+from tkinter.messagebox import askyesno
 
 from .base import *
 
@@ -13,6 +14,18 @@ class Window(Base):
         self.widget = Tk()
         self.widget.geometry(geometry)
         self.title = title
+
+    @property
+    def on_close(self, title, message):
+        print('on_close')
+        ans = askyesno(title, message)
+        if ans:
+            self.widget.destroy()
+        return ans
+    
+    @on_close.setter
+    def on_close(self, value):
+        self.widget.protocol("WM_DELETE_WINDOW", value)
 
     @property
     def title(self):
