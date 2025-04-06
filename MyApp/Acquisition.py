@@ -5,9 +5,10 @@ import numpy as np
 from itertools import cycle
 from matplotlib.animation import FuncAnimation
 
-
-max_value = 64  
-delay = 5 
+voltage_data = np.full((256, 1), np.nan)
+voltage_iteration = np.full((256, 1), np.nan)
+max_value = 255 
+delay = 0.01
 value = 0
 
 print("SSSTTTAAARRRTTT")
@@ -25,15 +26,51 @@ def read_voltage():
         ai_task.ai_channels.add_ai_voltage_chan("Dev1/ai7")
         return ai_task.read()
     
-voltageliste = []
+listerandom = []
+valeur112 = []
+valeur113 = []
+valeur3 = []
+valeur39 = []
+valeur115 = []
+listevoltage = []
 while True:
-    start_time = time.perf_counter()
-    set_daq_output(value)
-    voltage = read_voltage()
-    voltageliste.append(voltage)
-    value += 1
-    if value >= max_value:
-        print(f"Elapsed time: {time.perf_counter() - start_time:.5f} seconds")
+    binary_str = format(value, '08b')
+    if binary_str[-4] == '1':
+        value = value+8
+        binary_str = format(value, '08b')
+    if binary_str[-8] == '1':
         value = 0
-        print("voltage", voltageliste)
-        time.sleep(delay)
+        print(len(listerandom))
+        
+
+    set_daq_output(value)  
+    start_time = time.perf_counter()
+    
+        
+    '''voltage = read_voltage()
+    voltage_iteration[value] = voltage
+    voltage = read_voltage()
+    voltage_iteration[value] = voltage
+    voltage = read_voltage()
+    voltage_iteration[value] = voltage'''
+    
+    if value == 113:
+        valeur113.append(voltage)
+    if value == 112:
+        valeur112.append(voltage)
+    if value == 3:
+        valeur3.append(voltage)
+    if value == 39:
+        valeur39.append(voltage)        
+    if value == 115:
+        valeur115.append(voltage)
+        
+    time.sleep(delay)
+    listerandom.append(value)
+    print(value)
+    print(f"Voltage: {voltage:.5f} V")
+    #print()
+    value += 1
+    if value > max_value:
+        value = 0
+        
