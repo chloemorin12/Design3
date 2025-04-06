@@ -1,15 +1,16 @@
 import platform
 import subprocess
-from .modulesmanager import ModulesManager
-from .bindable import *
-from .window import *
-from .dialog import Dialog
 from contextlib import redirect_stdout
 import io
 from tkinter import TclError
 import pyperclip
+import tkinter as tk
+from tkinter.messagebox import askyesnocancel
+from tkinter import ttk, mainloop
+from bindable import Bindable
+from contextlib import suppress, os
 
-
+# Create the main application window
 
 class App(Bindable):
     app = None
@@ -19,35 +20,44 @@ class App(Bindable):
 
         self.name = name
         self.help_url = help_url
-        self.window = Window(geometry=geometry, title=name)
+        self.root = tk.Tk()
+        self.root.title(name)
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        self.root.geometry(f"{screen_width}x{screen_height}+0+0")
         self.check_requirements()
         self.create_menu()
         self.scheduled_tasks = []
         App.app = self
 
 
-    @property
-    def root(self):
-        return self.window.widget
-
+    
     @property
     def is_running(self):
         return self.root is not None
     
+
+
     
     def check_requirements(self):
         mac_version = platform.mac_ver()[0]
         python_version = platform.python_version()
 
         if mac_version >= "14" and python_version < "3.12":
-            Dialog.showwarning(
-                message="It is recommended to use Python 3.12 on macOS 14 (Sonoma) with Tk.  If not, you will need to move the mouse while holding the button to register the click."
-            )
+            pass
+            #Dialog.showwarning(
+            #    message="It is recommended to use Python 3.12 on macOS 14 (Sonoma) with Tk.  If not, you will need to move the mouse while holding the button to register the click."
+            #)
+
+    def mainloop(self):
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)  # Handle close button
+        self.root.mainloop()
 
     def create_menu(self):
-        root = self.window.widget
-        root.protocol("WM_DELETE_WINDOW", self.window.on_close("Save Data", "Do you want to save the collected data before quitting?"))
+        #root = self.window.widget
+        #root.protocol("WM_DELETE_WINDOW", self.window.on_close("Save Data", "Do you want to save the collected data before quitting?"))
 
+        '''
         menubar = Menu(root)
 
         appmenu = Menu(menubar, name="apple")
@@ -81,6 +91,11 @@ class App(Bindable):
 
         root.config(menu=menubar)
 
+    
+        '''
+
+
+
     def reveal_path(self, path):
         try:
             if platform.system() == "Windows":
@@ -90,10 +105,10 @@ class App(Bindable):
             else:
                 subprocess.call(["xdg-open", path])
         except:
-            Dialog.showerror(
-                title=f"Unable to show {path}",
-                message=f"An error occured when trying to reveal {path}",
-            )
+            pass
+            #Dialog.showerror(
+            #    title=f"Unable to show {path}",
+            #    message=f"An error occured when trying to reveal {path}",)
 
     def save(self):
         raise NotImplementedError("Implement save: in derived class")
@@ -102,13 +117,16 @@ class App(Bindable):
         raise NotImplementedError("Implement preferences: in derived class")
 
     def about(self, timeout=3000):
-        Dialog.showinfo(
-            title="About this App",
-            message="Created with myTk: A simple user interface framework for busy scientists.\n\nhttps://github.com/DCC-Lab/myTk",
-            auto_click=(Dialog.Replies.Ok, 5000),
-        )
+        pass
+        #Dialog.showinfo(
+        #    title="About this App",
+        #    message="Created with myTk: A simple user interface framework for busy scientists.\n\nhttps://github.com/DCC-Lab/myTk",
+        #    auto_click=(Dialog.Replies.Ok, 5000),
+        #)
 
     def help(self):
+        pass
+        '''
         ModulesManager.install_and_import_modules_if_absent(
             {"webbrowser": "webbrowser"}
         )
@@ -121,6 +139,7 @@ class App(Bindable):
                 message="There is no help available for this Application.",
                 timeout=3000,
             )
+        '''
 
     def after(self, delay, function):
         task_id = None
@@ -149,21 +168,22 @@ class App(Bindable):
             self.after_cancel_all()
             with suppress(TclError):  # tkinter may complain, we ignore
                 with redirect_stdout(io.StringIO()):
-                    self.window.widget.destroy()
-                    self.window.widget = None
+                    self.root.quit()
+                    self.root = None
     
-    '''
     def on_close(self):
         """
         Handle the close button click event.
         Suggest saving data before quitting.
         """
-        if Dialog.askyesnocancel(
+        response = askyesnocancel(
             title="Save Data",
             message="Do you want to save the collected data before quitting?",
-        ):
-            self.save()  # Call the save method (to be implemented in the derived class)
-        elif Dialog.Replies.No:
+        )
+        if response is True:  # User clicked "Yes"
+            pass
+            #self.save()  # Call the save method (to be implemented in the derived class)
+        elif response is False:  # User clicked "No"
             self.quit()  # Quit without saving
-        # If the user cancels, do nothing
-    '''
+        # If the user cancels (response is None), do nothing
+    
