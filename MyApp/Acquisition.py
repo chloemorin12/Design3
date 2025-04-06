@@ -47,8 +47,8 @@ while True:
     start_time = time.perf_counter()
     
         
-    '''voltage = read_voltage()
-    voltage_iteration[value] = voltage
+    voltage = read_voltage()
+    '''voltage_iteration[value] = voltage
     voltage = read_voltage()
     voltage_iteration[value] = voltage
     voltage = read_voltage()
