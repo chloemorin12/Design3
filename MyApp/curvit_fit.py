@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
 
+
 # Define the second-order step response function with gain
 def second_order_step_response(t, zeta, omega_n, K):
     omega_d = omega_n * np.sqrt(1 - zeta**2)  # Damped natural frequency
@@ -31,7 +32,7 @@ print(response)
 
 
 # Initial guess for the parameters [zeta, omega_n, K]
-initial_guess = [0.8342159936178484, 0.05307999899510393, 19.26677379649072]# Adjust initial guesses as needed
+initial_guess = [0.83, 0.051, 19.3]# Adjust initial guesses as needed
 
 # Fit the curve
 params, covariance = curve_fit(second_order_step_response, time, response, p0=initial_guess)

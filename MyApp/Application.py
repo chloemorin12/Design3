@@ -97,13 +97,14 @@ class PowerMeterApp(App):
         self.ax_puissance = self.plot_puissance.add_subplot(111)
         self.ax_puissance.plot(self.historique_temps_mesure, self.historique_puissance)
 
+
         self.canvas = FigureCanvasTkAgg(self.plot_puissance, master=self.power_frame)
         self.canvas_widget = self.canvas.get_tk_widget()
         self.canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
 
 
 
-        
+         
 
 
         # Graphique de position
@@ -117,6 +118,8 @@ class PowerMeterApp(App):
         self.pos_canvas = FigureCanvasTkAgg(fig, master=self.pos_frame)
         self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
         self.pos_canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
+
+
         
         
         size = 15

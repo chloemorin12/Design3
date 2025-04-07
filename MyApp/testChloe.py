@@ -41,14 +41,14 @@ def inverse_transfer_function( Gain, w_n, z):
 
 
 
-file_path = r"C:\Users\chloe\5mm_bas_validation.xlsx"
+file_path = r"C:\Users\chloe\5mm_bas_validation_copie.xlsx"
 df = pd.read_excel(file_path)
 
 
 
-thermistance1 = df.iloc[:, :1]
-ref = df.iloc[:, 2]
-t = pd.to_numeric(df.iloc[:, 3], errors='coerce')
+thermistance1 = df.iloc[:, :9]
+ref = df.iloc[:, 9]
+t = pd.to_numeric(df.iloc[:, 10], errors='coerce')
 thermistance1 = thermistance1.apply(lambda col: col -ref, axis=0)  #subtract(ref, axis=0) #
 
 
@@ -199,8 +199,6 @@ def position(liste_temp):
 
 # code pour visualiser la position du peak dans le temps
 
-
-
 def gaussian_2d(coords, A, x0, y0, sigma_x, sigma_y, offset):
     x, y = coords
     return A * np.exp(
@@ -294,6 +292,6 @@ def update_peak_position(frame):
     ax.set_title(f"Peak Position Over Time (Frame {frame + 1})")
 
 # Use FuncAnimation to update the plot dynamically
-ani = FuncAnimation(fig, update_peak_position, frames=len(thermistance), interval=0.0001)
+#ani = FuncAnimation(fig, update_peak_position, frames=len(thermistance), interval=0.0001)
 
-plt.show()
+#plt.show()
