@@ -60,7 +60,7 @@ def get_position_v1(array_thermistor):
     plt.show()
 
 
-
+'''
 fig, ax = plt.subplots(figsize=(10, 6))
 scatter = ax.scatter(x_data, y_data, c=z_data, cmap='coolwarm', marker='o', label='Thermistor Readings')
 ax.scatter(x_peak, y_peak, c='black', marker='x', s=30, label="Estimated Heat Source")
@@ -85,4 +85,4 @@ plt.title("Heat Source Localization using Gaussian Fit")
 plt.xlabel("X Position")
 plt.ylabel("Y Position")
 plt.show()
-
+'''
