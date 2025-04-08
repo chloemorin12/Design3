@@ -5,7 +5,7 @@ from testChloe import data_gradient_temperature, position
 import matplotlib.pyplot as plt
 import matplotlib, sys
 matplotlib.use('TkAgg')
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from datetime import datetime
 from tkinter.messagebox import askyesno
 import tkinter as tk
@@ -13,6 +13,12 @@ from tkinter import ttk
 from app import App
 from bindable import Bindable
 from base import Base
+from Algorithm_wavelength import trouver_longueurs_donde, longueur_donde_commune, plot_graph, adjust_value, wavelength_calculator
+import pandas as pd
+from scipy.interpolate import interp1d
+from tkinter import messagebox
+import numpy as np
+
 
 class PowerMeterApp(App):
     def __init__(self):
@@ -48,6 +54,128 @@ class PowerMeterApp(App):
         self.notebook.add(self.tab_longeur_onde, text="Longueur d'onde")
         self.tab_longeur_onde.grid_rowconfigure(0, weight=1)  # Make row 0 expandable   
         self.tab_longeur_onde.grid_columnconfigure(0, weight=1)  # Make column 0 expandable
+
+        
+
+      
+
+        # Fenêtre Longueur d'onde / contrôle Moteur
+        #self.controle_frame = tk.LabelFrame(self.tab_longeur_onde, text="Contrôle Moteur")
+        #self.controle_frame.grid(row=0, column=0, columnspan=3, sticky="ew", padx=10, pady=5)
+        #self.moteur_buton = tk.Button(self.controle_frame, text = "Just a Test")
+        #self.moteur_buton.grid(row=0, column=1, pady=15, padx=5, sticky="w")
+
+
+        # Frame pour les entrées de puissances et les cases
+        top_frame = tk.Frame(self.tab_longeur_onde)
+        top_frame.grid(row=0, column=0, padx=10, pady=10, sticky="n")
+
+        #self.ask_wavelength = tk.LabelFrame(self.tab_longeur_onde, text=" Calcul longueur d'onde")
+        #self.ask_wavelength.grid(row=0, column=0, columnspan=1, sticky="ew", padx=10, pady=5)
+
+        # Ajouter un label : Message sur le fonctionenment au besoin (TO-DO)
+        label = tk.Label(top_frame, text="Cliquez sur 'Lancer les calculs'", font=("Arial", 12))
+        label.grid(row=0, column=0, columnspan=1, padx=10, pady=10)
+
+
+
+
+
+        main_frame = tk.Frame(self.tab_longeur_onde)
+        main_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="n")
+
+        puissance_wavelength = [500, 55, 499, 250] # Cette liste deviendra dans le futur les données de puissance des thermistances où les filtres
+
+        # Variables pour les trois cases
+        case1_value = tk.DoubleVar(value=1.0)  # Valeur initiale
+        case2_value = tk.DoubleVar(value=1.0)
+        case3_value = tk.DoubleVar(value=1.0)
+
+
+        # Fonction pour créer une case avec flèches
+        def create_case(frame, var, label_text, row, col):
+            label = tk.Label(frame, text=label_text, font=("Arial", 10))
+            label.grid(row=row, column=col, padx=5)
+
+            entry = tk.Entry(frame, textvariable=var, font=("Arial", 10), width=5)
+            entry.grid(row=row, column=col+1, padx=5)
+
+            # Flèches pour augmenter et diminuer
+            up_button = tk.Button(frame, text="↑", command=lambda: adjust_value(var, 0.5))
+            up_button.grid(row=row, column=col+2, padx=5)
+            
+            down_button = tk.Button(frame, text="↓", command=lambda: adjust_value(var, -0.5))
+            down_button.grid(row=row, column=col+3, padx=5)
+
+        # Frame pour les cases avec flèches, à placer à droite de la frame des entrées
+        case_frame = tk.Frame(main_frame)
+        case_frame.grid(row=2, column=2, padx=20)
+
+        # Créer les trois cases à droite
+        create_case(case_frame, case1_value, "Incertitude F2 (%):", 0, 0)
+        create_case(case_frame, case2_value, "Incertitude F3 (%):", 1, 0)
+        create_case(case_frame, case3_value, "Incertitude F4 (%):", 2, 0)
+
+        def on_button_click():
+            iterations = 0
+            if iterations == 0:
+                case1_value.set(1.0)
+                case2_value.set(1.0)
+                case3_value.set(1.0)
+            
+            case1_percentage = case1_value.get()
+            case2_percentage = case2_value.get()
+            case3_percentage = case3_value.get()
+
+            ytols = np.array([case1_percentage, case2_percentage, case3_percentage])
+            
+            while wavelength_calculator(ytols, puissance_wavelength, canvas_frame, result_value_label) == 0 and iterations < 98:
+                ytols+=1
+                case1_value.set(ytols[0])
+                case2_value.set(ytols[1])
+                case3_value.set(ytols[2])
+                iterations += 1
+
+
+        # Bouton pour lancer les calculs
+        button = tk.Button(top_frame, text="Lancer les calculs", command=on_button_click, font=("Arial", 12), bg="lightblue")
+        button.grid(row=0, column=1, padx=10, pady=10)
+
+        # Canvas pour afficher le graphique
+        canvas_frame = tk.Frame(self.tab_longeur_onde)
+        canvas_frame.grid(row=1, column=0, columnspan=6, padx=10, pady=10, sticky="n")
+        
+        #result_frame = tk.Frame(self.tab_longeur_onde)
+        #result_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+        label_result = tk.Label(main_frame, 
+                            text="Longueur d'onde mesurée : ", 
+                            font=("Arial", 16, "bold"), 
+                            fg="#2e4053", 
+                            bg="#f0f4f8", 
+                            padx=10, pady=10)
+        label_result.grid(row=2, column=0, padx=10, pady=5)
+
+        result_value_label = tk.Label(main_frame, 
+                                text=" --- nm", 
+                                font=("Arial", 20, "italic"), 
+                                fg="#1e3d59", 
+                                bg="#f0f4f8")
+        result_value_label.grid(row=2, column=1, padx=10, pady=5)
+
+        # Fonction pour initialiser le graphique
+        plot_graph(None, None, None, canvas_frame)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
