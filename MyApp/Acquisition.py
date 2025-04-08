@@ -70,11 +70,13 @@ for i in range(0, 256):
         value = value+8
         binary_str = format(value, '08b')
     if binary_str[-8] == '1':
-        print(voltage_data)
+        #print(voltage_data)
         value = 0
         data = np.hstack((thermistor,voltage_data))
         data = data[~np.isnan(data).any(axis=1)]
-        x = data[:, 0]
+        stop_time = time.perf_counter()
+        print('temps: ', stop_time - start_time)
+        '''x = data[:, 0]
         y = data[:, 1]
         z = data[:, 2]
         plt.figure(figsize=(6, 5))
@@ -84,7 +86,7 @@ for i in range(0, 256):
         plt.ylabel('Y')
         plt.title('2D Scatter with Colormap from Z')
         plt.grid(True)
-        plt.show()
+        plt.show()'''
         break
     
     set_daq_output(value)
