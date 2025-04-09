@@ -108,9 +108,13 @@ class PowerMeterApp(App):
         self.canvas_widget = self.canvas.get_tk_widget()
         self.canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
 
+        self.toolbar_frame_puissance = tk.Frame(self.power_frame)
+        self.toolbar_frame_puissance.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
+        self.toolbar_puissance = NavigationToolbar2Tk(self.canvas, self.toolbar_frame_puissance)
+        self.toolbar_puissance.update()
+        self.toolbar_puissance.grid(row=0, column=0, sticky="ew")
 
 
-        
 
 
         # Graphique de position
@@ -126,7 +130,13 @@ class PowerMeterApp(App):
         self.pos_canvas = FigureCanvasTkAgg(fig, master=self.pos_frame)
         self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
         self.pos_canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
-        
+
+        self.toolbar_frame_position = tk.Frame(self.pos_frame)
+        self.toolbar_frame_position.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
+        self.toolbar_position = NavigationToolbar2Tk(self.pos_canvas, self.toolbar_frame_position)
+        self.toolbar_position.update()
+        self.toolbar_position.grid(row=0, column=0, sticky="ew")
+
         
         size = 15
         #self.bigb_font = tk tkFont.Font(family='Helvetica', size=size, weight='bold')
