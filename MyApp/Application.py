@@ -100,6 +100,8 @@ class PowerMeterApp(App):
         
         self.plot_puissance = plt.figure(figsize=(5, 4))
         self.ax_puissance = self.plot_puissance.add_subplot(111)
+        self.ax_puissance.set_xlabel("Temps [s]")
+        self.ax_puissance.set_ylabel("Puissance [mW]")
         self.ax_puissance.plot(self.historique_temps_mesure, self.historique_puissance)
 
         self.canvas = FigureCanvasTkAgg(self.plot_puissance, master=self.power_frame)
@@ -118,6 +120,8 @@ class PowerMeterApp(App):
         fig = plt.figure(figsize=(5, 4))
         self.ax = fig.add_subplot(111)
         self.ax.imshow(data_gradient_temperature(self.device.get_temperature_from_device()), origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
+        self.ax.set_xlabel("Position X [cm]")
+        self.ax.set_ylabel("Position Y [cm]")
         
         self.pos_canvas = FigureCanvasTkAgg(fig, master=self.pos_frame)
         self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
@@ -272,11 +276,15 @@ class PowerMeterApp(App):
         #self.first_axis.plot(self.x, self.y, "k-")
         self.ax_puissance.cla()  # Clears the axes
         self.ax_puissance.plot(range(len(self.historique_temps_mesure)), self.historique_puissance)  # modifier axe des x ?
+        self.ax_puissance.set_xlabel("Temps [s]")
+        self.ax_puissance.set_ylabel("Puissance [mW]")
         self.canvas.draw()
         self.canvas.flush_events()
 
         self.ax.cla()  # Clears the axes
         self.ax.imshow(data_gradient_temperature(self.device.get_temperature_from_device()), origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
+        self.ax.set_xlabel("Position X [cm]")
+        self.ax.set_ylabel("Position Y [cm]")
         self.pos_canvas.draw()
         self.pos_canvas.flush_events()
 
