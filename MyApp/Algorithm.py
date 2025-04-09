@@ -59,30 +59,7 @@ def get_position_v1(array_thermistor):
     cbar.set_label('Temperature (°C)')
     plt.show()
 
+get_position_v1([
+    0.779, 0.779, 0.779, 1, 0.779,
+    0.779, 0.779, 0.779, 0.779])
 
-'''
-fig, ax = plt.subplots(figsize=(10, 6))
-scatter = ax.scatter(x_data, y_data, c=z_data, cmap='coolwarm', marker='o', label='Thermistor Readings')
-#ax.scatter(x_peak, y_peak, c='black', marker='x', s=30, label="Estimated Heat Source")
-ax.set_xlabel("X Position")
-ax.set_ylabel("Y Position")
-ax.set_title("Heat Source Localization using Gaussian Fit")
-ax.legend()
-cbar = plt.colorbar(scatter, ax=ax)
-cbar.set_label('Temperature (°C)')
-plt.show()
-
-
-# Permet de voir le gradient de température + position centre laser
-x = np.linspace(0, 4, 100)
-y = np.linspace(0, 4, 100)
-x,y = np.meshgrid(x, y)
-#z = gaussian_2d((x, y), A, x_peak, y_peak, sigma_x, sigma_y, offset)
-
-plt.imshow(z, origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
-plt.colorbar(label='Temperature (°C)')
-plt.title("Heat Source Localization using Gaussian Fit")
-plt.xlabel("X Position")
-plt.ylabel("Y Position")
-plt.show()
-'''

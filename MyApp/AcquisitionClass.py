@@ -61,38 +61,70 @@ class Acquisition:
             data = task.read(number_of_samples_per_channel=self.samples_to_read)
             return(np.mean(data))
         
-    def iter_thermistor(self):
+    def Power_thermistor(self):
         start_time = time.perf_counter()
-        for i in range(self.max_value):
-            self.value = i
-            binary_str = format(self.value, '08b')
-            if binary_str[-4] == '1':
-                self.value = self.value+8
+        with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
+            do_task.do_channels.add_do_chan("Dev1/port0/line0:7")
+            ai_task.ai_channels.add_ai_voltage_chan("Dev1/ai7")
+            ai_task.timing.cfg_samp_clk_timing(
+                rate=self.sample_rate,
+                sample_mode=AcquisitionType.FINITE,
+                samps_per_chan=self.samples_to_read)
+
+            for i in range(self.max_value):
+                self.value = i
                 binary_str = format(self.value, '08b')
-            if binary_str[-8] == '1':
-                data = np.hstack((self.thermistor,self.voltage_data))
-                data = data[~np.isnan(data).any(axis=1)]
-                x = data[:, 0]
-                y = data[:, 1]
-                z = data[:, 2]
-                stop_time = time.perf_counter()
-                print(-start_time+stop_time)
-                plt.figure(figsize=(6, 5))
-                sc = plt.scatter(x, y, c=z, cmap='coolwarm', s=100, edgecolor='k')  # You can change 'viridis' to other colormaps
-                plt.colorbar(sc, label='Z value (color)')
-                plt.xlabel('X')
-                plt.ylabel('Y')
-                plt.title('2D Scatter with Colormap from Z')
-                plt.grid(True)
-                plt.show()
-                return self.voltage_data
+
+                if binary_str[-4] == '1':
+                    self.value += 8
+                    binary_str = format(self.value, '08b')
+                if binary_str[-8] == '1':
+                    data = np.hstack((self.thermistor, self.voltage_data))
+                    data = data[~np.isnan(data).any(axis=1)]
+                    x, y, z = data[:, 0], data[:, 1], data[:, 2]
+                    plt.figure(figsize=(6, 5))
+                    sc = plt.scatter(x, y, c=z, cmap='coolwarm', s=100, edgecolor='k')
+                    plt.colorbar(sc, label='Voltage')
+                    plt.xlabel('X')
+                    plt.ylabel('Y')
+                    plt.title('2D Scatter of Thermistor Readings')
+                    plt.grid(True)
+                    plt.show()
+
+                    stop_time = time.perf_counter()
+                    print(f"Temps total: {stop_time - start_time:.2f} s")
+                    return self.voltage_data
+                
+                do_task.write(self.value, auto_start=True)
+                data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
+                self.voltage_data[i] = np.mean(data)
+                
+    def Wavelength_thermistor(self):
+        with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
+            do_task.do_channels.add_do_chan("Dev1/port0/line0:7")
+            ai_task.ai_channels.add_ai_voltage_chan("Dev1/ai7")
+            ai_task.timing.cfg_samp_clk_timing(
+                rate=self.sample_rate,
+                sample_mode=AcquisitionType.FINITE,
+                samps_per_chan=self.samples_to_read)
             
-            self.set_daq_output()
-            #time.sleep(self.delay)
-            voltage = self.read_voltage()
-            self.voltage_data[i] = voltage
-        
+            do_task.write(136, auto_start=True)
+            data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
+            self.voltage_data[136] = np.mean(data)
+            do_task.write(153, auto_start=True)
+            data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
+            self.voltage_data[153] = np.mean(data) 
+            do_task.write(170, auto_start=True)
+            data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
+            self.voltage_data[170] = np.mean(data) 
+            do_task.write(187, auto_start=True)
+            data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
+            self.voltage_data[187] = np.mean(data)  
+            data = np.hstack((self.thermistor, self.voltage_data))
+            return self.voltage_data
+            
+                   
 
 allo = Acquisition()
 allo.assign_thermistor_positions()
-allo.iter_thermistor()
+allo.Power_thermistor()
