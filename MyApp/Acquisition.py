@@ -6,10 +6,10 @@ from nidaqmx.constants import AcquisitionType
 
 voltage_data = np.full((256, 1), np.nan)
 thermistor = np.full((256, 2), np.nan)
-max_value = 255 
-delay = 0.001
+max_value = 255
+delay =0
 value = 0
-
+allo = 2
 duration = 0.05 #seconds
 sample_rate = 1000
 samples_to_read = int(sample_rate * duration)
@@ -35,10 +35,10 @@ real_thermistor_positions = [
     [-6.25, 10.825317547305483], [-3.125, 10.825317547305483], [0.0, 10.825317547305483],
     [3.125, 10.825317547305483], [6.25, 10.825317547305483]]
 liste_thermistor_values = [
-                           66,82,113,48,32,97,67,98,49,16,0,81,68,83,114,33,17,
-                           1,65,69,84,99,50,34,18,2,112,70,85,100,115,51,35,19,
-                           3,71,86,101,116,52,36,20,4,87,102,117,53,37,21,5,103,
-                           118,54,38,22,6,119,55,39,23,7]
+                            66,82,113,48,32,97,67,98,49,16,0,81,68,83,114,33,17,
+                            1,65,69,84,99,50,34,18,2,112,70,85,100,115,51,35,19,
+                            3,71,86,101,116,52,36,20,4,87,102,117,53,37,21,5,103,
+                            118,54,38,22,6,119,55,39,23,7]
 
 def assign_thermistor_positions():
     for i in range(len(real_thermistor_positions)):
