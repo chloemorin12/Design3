@@ -9,7 +9,6 @@ thermistor = np.full((256, 2), np.nan)
 max_value = 255
 delay =0
 value = 0
-allo = 2
 duration = 0.05 #seconds
 sample_rate = 1000
 samples_to_read = int(sample_rate * duration)
