@@ -56,6 +56,11 @@ class PowerMeterApp(App):
         self.actions_frame = tk.LabelFrame(self.tab_puissance, text="Actions")
         self.actions_frame.grid(row=0, column=0, columnspan=3, sticky="ew", padx=10, pady=5)
 
+        #lumière indicatif
+        self.status_light = tk.Canvas(self.actions_frame, width=24, height=24, bg='white', highlightthickness=0)
+        self.light_id = self.status_light.create_oval(4, 4, 20, 20, fill="red", outline="gray")
+        self.status_light.grid(row=0, column=0, padx=10, pady=15)
+        
         # Démarrer/Arrêter
         self.start_button = tk.Button(self.actions_frame, text = "Démarrer", command=self.click_start)
         self.start_button.grid(row=0, column=1, pady=15, padx=5, sticky="w")
@@ -193,6 +198,7 @@ class PowerMeterApp(App):
             self.is_refreshing = True
             self.update_loop()
             self.start_button.config(text="Arrêter")
+            self.status_light.itemconfig(self.light_id, fill="green")
             # Historique communication
             self.Évènements.append(self.get_time() + ' : '+'La prise de donnée est en cours')
             #self.label_com.value_variable.set(self.get_time() + ' : '+'La prise de donnée est en cours')
@@ -206,6 +212,7 @@ class PowerMeterApp(App):
         else:
             self.is_refreshing = False
             self.start_button.config(text="Démarrer")
+            self.status_light.itemconfig(self.light_id, fill="red")
             # Historique communication
             self.Évènements.append(self.get_time()+ ' : '+'La prise de donnée est mise en pause')
             #self.label_com.value_variable.set(self.get_time()+ ' : '+'La prise de donnée est mise en pause')
