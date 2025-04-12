@@ -46,11 +46,10 @@ class Acquisition:
                            118,54,38,22,6,119,55,39,23,7]
         for i in range(len(real_thermistor_positions)):
             position = liste_thermistor_values[i]
-            self.thermistor[position] = real_thermistor_positions[i]
+            self.thermistor[position] = real_thermistor_positions[i]   
         return self.thermistor
         
     def Power_thermistor(self):
-        max_value = 256
         value = 0
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
             do_task.do_channels.add_do_chan("Dev1/port0/line0:7")
@@ -64,17 +63,19 @@ class Acquisition:
                 value = i
                 binary_str = format(value, '08b')
                 if binary_str[-4] == '1':
-                    value += 8
-                    binary_str = format(value, '08b')
+                    self.voltage_data[i] = np.nan # retourne (x, y, voltage) pour chaucune des 61 thermistors
+                    continue
                 if binary_str[-8] == '1':
                     self.data = np.hstack((self.thermistor, self.voltage_data))
-                    self.data = self.data[~np.isnan(self.data).any(axis=1)]
-                    x, y, z = self.data[:, 0], self.data[:, 1], self.data[:, 2]
-                    return self.voltage_data
+                    print(self.data)
+                    return self.data
                 
                 do_task.write(value, auto_start=True)
                 self.data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
-                self.voltage_data[i] = np.mean(self.data)
+                self.voltage_data[i] = np.nanmean(self.data)   # retourne (x, y, voltage) pour chaucune des 61 thermistors
+                
+                
+            
                 
     def Wavelength_thermistor(self):
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
@@ -105,9 +106,14 @@ class Acquisition:
         radius = diameter / 2
         self.data = self.data[~np.isnan(self.data).any(axis=1)]
         x, y, z = self.data[:, 0], self.data[:, 1], self.data[:, 2]
-        initial_guess = [np.max(z), 1, 1, 2.5, 2.5, np.min(z)]
-        xy = np.vstack((x, y))
-        params, _ = curve_fit(gaussian_2d, xy, z, p0=initial_guess)
+        initial_guess = [float(max(z)-min(z)), 0, 0, 2.5, 2.5, float(min(z))]
+        bounds = ([0, -15, -15, 0, 0, -np.inf], [np.inf, 15, 15, np.inf, np.inf, np.inf])
+        xy = np.vstack((x, y))   # isole x et y 
+        params, _ = curve_fit(gaussian_2d, xy, z, p0=initial_guess, bounds=bounds)
+        #print(initial_guess)
+        #print(params)
+        #print(x[0], y[0])
+        #print(params[0] * np.exp(-((x[0] - params[1])**2 / (2 * params[3]**2) + (y[0] - params[2])**2 / (2 * params[4]**2))) + params[5])
         A, x_peak, y_peak, sigma_x, sigma_y, offset = params
         print(f"Fitted Peak: x = {x_peak}, y = {y_peak}")
         
