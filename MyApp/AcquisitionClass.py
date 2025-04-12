@@ -140,7 +140,7 @@ class Acquisition:
                    
 
 # Example usage:
-'''allo = Acquisition()
+allo = Acquisition()
 allo.assign_thermistor_positions()
 allo.Power_thermistor()
-allo.fitting()'''
+allo.fitting()

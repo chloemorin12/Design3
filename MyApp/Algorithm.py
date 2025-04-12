@@ -101,5 +101,11 @@ def fitting(data):
     plt.axis("equal")
     plt.grid(True)
     plt.show()
+    
+def thermistor_temperature(data):
+    '''Associate the temperature and voltage values of thermistors
+    to calibrate the system'''
+    pass
+    
             
 print(fitting(data))        

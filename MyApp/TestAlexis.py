@@ -1,6 +1,35 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+import numpy as np
+
+def E_binding(Z, A):
+    a_V = 15.75
+    a_S = 17.80
+    a_C = 0.711
+    a_A = 94.78
+    a_P = 11.18
+    volume = a_V * A
+    surface = -a_S * A**(2/3)
+    coulomb = -a_C * Z**2 / A**(1/3)
+    asymmetry = -a_A * (Z - A/2)**2 / A
+
+    if A % 2 == 1:
+        pairing = 0
+    else:
+        pairing = a_P * ((-1)**Z + (-1)**(A - Z)) / (2 * A**0.5)
+
+    return volume + surface + coulomb + asymmetry + pairing
+
+A = 96
+Z = 37
+E = E_binding(Z, A)
+print('Énergie: ', round(E,3), 'MeV')
+
+
+
+'''
 thermistor = np.full((256, 2), np.nan)
 real_thermistor_positions = [
     [-6.25, -10.825317547305483], [-3.125, -10.825317547305483], [0.0, -10.825317547305483],
@@ -37,7 +66,7 @@ def assign_thermistor_positions():
 allo = assign_thermistor_positions()
 print(allo)
 
-'''n = 120
+n = 120
 binary_str = format(n, '08b')
 print(binary_str)
 print(binary_str[-4])
