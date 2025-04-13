@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
 
-
+"""
 # Define the second-order step response function with gain
 def second_order_step_response(t, zeta, omega_n, K):
     omega_d = omega_n * np.sqrt(1 - zeta**2)  # Damped natural frequency
@@ -56,3 +56,4 @@ plt.title('Second-Order Step Response Curve Fit with Gain')
 plt.legend()
 plt.grid()
 plt.show()
+"""

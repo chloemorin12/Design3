@@ -117,24 +117,19 @@ class PowerMeterApp(App):
         create_case(case_frame, case3_value, "Incertitude F4 (%):", 2, 0)
 
         def on_button_click():
+            Powers = [100, 46, 90, 11]
             iterations = 0
-            if iterations == 0:
-                case1_value.set(1.0)
-                case2_value.set(1.0)
-                case3_value.set(1.0)
-            
-            case1_percentage = case1_value.get()
-            case2_percentage = case2_value.get()
-            case3_percentage = case3_value.get()
-
-            ytols = np.array([case1_percentage, case2_percentage, case3_percentage])
-            
-            while wavelength_calculator(ytols, puissance_wavelength, canvas_frame, result_value_label) == 0 and iterations < 98:
+            ytols = np.array([2.0, 2.0, 2.0])
+                
+            while wavelength_calculator(Powers, ytols, canvas_frame, result_value_label) == 0 and iterations < 99:
                 ytols+=1
-                case1_value.set(ytols[0])
-                case2_value.set(ytols[1])
-                case3_value.set(ytols[2])
                 iterations += 1
+                if wavelength_calculator(Powers, ytols, canvas_frame, result_value_label) != 0 or iterations == 98:
+                    break
+            final_result, incertainty, wl_individuelles = wavelength_calculator(Powers, ytols, canvas_frame, result_value_label)
+            graphe = plot_graph(wl_individuelles[0], wl_individuelles[1], wl_individuelles[2], canvas_frame)
+            return final_result, incertainty, graphe, ytols
+
 
 
         # Bouton pour lancer les calculs

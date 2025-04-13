@@ -3,7 +3,6 @@ import subprocess
 from contextlib import redirect_stdout
 import io
 from tkinter import TclError
-import pyperclip
 import tkinter as tk
 from tkinter.messagebox import askyesnocancel
 from tkinter import ttk, mainloop

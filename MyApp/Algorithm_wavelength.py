@@ -10,7 +10,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,  NavigationTool
 from tkinter import filedialog, messagebox
 
 # Charger le fichier Excel
-file_path = r'Absortion_filtres_reel.xlsx'  # chemin du fichier contenant la transmission des filtres
+file_path = r'C:/Users/ilitah1/Downloads/Power_meter_app/Design3/Absortion_filtres_reel.xlsx'  # chemin du fichier contenant la transmission des filtres
 df = pd.read_excel(file_path)  # Charger les données à partir du fichier Excel
 
 filter_names = pd.read_excel(file_path, header=0).iloc[0, 1::2].tolist()
@@ -83,7 +83,7 @@ def adjust_value(var, increment):
 # Fonction pour trouver les longueurs d'onde correspondant aux pourcentages donnés
 
 
-def longueur_donde_commune(pourcentages, ytols, xtol=5):
+def longueur_donde_commune(pourcentages, ytols, xtol=1):
     longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_donde_trouvees3 = trouver_longueurs_donde(pourcentages, ytols)
     
     # Trouver l'intersection des trois ensembles de longueurs d'onde avec tolérance
@@ -144,14 +144,12 @@ def plot_graph(longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_d
         canvas.get_tk_widget().grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
 
 # Fonction pour effectuer les calculs et afficher les résultats
-def wavelength_calculator(ytols, puissance, canvas_frame, label):
+def wavelength_calculator(Powers ,ytols, canvas_frame, label):
     try:
         # Lire les pourcentages à partir de l'entrée utilisateur
-        puissances = puissance
+        puissances = Powers
         pourcentages = [(p / puissances[0]) * 100 for p in puissances]
-        print(pourcentages)
-
-        
+        print(pourcentages) 
         # Calcul des longueurs d'onde correspondant aux pourcentages approximatifs
         longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_donde_trouvees3 = trouver_longueurs_donde(pourcentages, ytols)
         longueurs_donde_communes = longueur_donde_commune(pourcentages, ytols)
@@ -159,24 +157,31 @@ def wavelength_calculator(ytols, puissance, canvas_frame, label):
             return 0
         print(f" Longueur d'onde itération 1 :{np.round(np.mean(longueurs_donde_communes))} nm")
         print("##################################################################################################")
-        interpolant = interp1d(df['Wavelength_Filter1'], df['Absorption_Filter1'], kind='linear', fill_value="extrapolate")
-        pourcentages[0] = float(interpolant(np.round(np.mean(longueurs_donde_communes))))
-        puissance_ref = 100*puissances[0]/pourcentages[0]
-        pourcentages = [((p / puissance_ref) * (100)) for p in puissances]
-        print(pourcentages)
-        # Calcul des longueurs d'onde correspondant aux pourcentages corrigés.
-        longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_donde_trouvees3 = trouver_longueurs_donde(pourcentages, ytols)
-        longueurs_donde_communes = longueur_donde_commune(pourcentages, ytols)
-        print(f" Longueur d'onde finale {np.round(np.mean(longueurs_donde_communes))} nm")
+        pourcentages, longueurs_donde_communes, wl_individuelles = corr_pourcentages(puissances, pourcentages, longueurs_donde_communes, ytols)
+        pourcentages, longueurs_donde_communes, wl_individuelles = corr_pourcentages(puissances, pourcentages, longueurs_donde_communes, ytols)
+        print(f" Longueur d'onde finale {np.round(np.mean(longueurs_donde_communes))} ± {np.round(np.std(longueurs_donde_communes))} nm")
         
         messagebox.showinfo("Info", "La mesure de longueur d'onde est finie")
 
         # Mettre à jour le graphique
         plot_graph(longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_donde_trouvees3, canvas_frame)
         label.config(text=f" {np.round(np.mean(longueurs_donde_communes))} ± {np.round(np.std(longueurs_donde_communes))} nm")
-        return np.round(np.mean(longueurs_donde_communes)), np.round(np.std(longueurs_donde_communes))
+        return np.round(np.mean(longueurs_donde_communes)), np.round(np.std(longueurs_donde_communes)), wl_individuelles
     
     #except Exception as e:
         #print(f"Une exception s'est produite : {e}")
     except ValueError:
         messagebox.showerror("Erreur", "Veuillez entrer des pourcentages valides séparés par des virgules.")
+
+def corr_pourcentages(puissances, pourcentages, longueurs_donde_communes, ytols):
+    interpolant = interp1d(df['Wavelength_Filter1'], df['Absorption_Filter1'], kind='linear', fill_value="extrapolate")
+    pourcentages[0] = float(interpolant(np.round(np.mean(longueurs_donde_communes))))
+    puissance_ref = 100*puissances[0]/pourcentages[0]
+    pourcentages = [((p / puissance_ref) * (100)) for p in puissances]
+    print(f" Absorption des filtres: {pourcentages} %")
+    # Calcul des longueurs d'onde correspondant aux pourcentages corrigés itération 2.
+    longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_donde_trouvees3 = trouver_longueurs_donde(pourcentages, ytols)
+    longueurs_donde_communes = longueur_donde_commune(pourcentages, ytols)
+    print(f" Longueur d'onde itération :{np.round(np.mean(longueurs_donde_communes))} nm")
+    wl_individuelles = [longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_donde_trouvees3]
+    return pourcentages, longueurs_donde_communes, wl_individuelles
