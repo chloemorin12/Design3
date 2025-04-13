@@ -10,7 +10,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,  NavigationTool
 from tkinter import filedialog, messagebox
 
 # Charger le fichier Excel
-file_path = r'C:/Users/ilitah1/Downloads/Power_meter_app/Design3/Absortion_filtres_reel.xlsx'  # chemin du fichier contenant la transmission des filtres
+file_path = r'Absortion_filtres_reel.xlsx'  # chemin du fichier contenant la transmission des filtres
 df = pd.read_excel(file_path)  # Charger les données à partir du fichier Excel
 
 filter_names = pd.read_excel(file_path, header=0).iloc[0, 1::2].tolist()
@@ -159,9 +159,8 @@ def wavelength_calculator(Powers ,ytols, canvas_frame, label):
         print("##################################################################################################")
         pourcentages, longueurs_donde_communes, wl_individuelles = corr_pourcentages(puissances, pourcentages, longueurs_donde_communes, ytols)
         pourcentages, longueurs_donde_communes, wl_individuelles = corr_pourcentages(puissances, pourcentages, longueurs_donde_communes, ytols)
+        pourcentages, longueurs_donde_communes, wl_individuelles = corr_pourcentages(puissances, pourcentages, longueurs_donde_communes, ytols)
         print(f" Longueur d'onde finale {np.round(np.mean(longueurs_donde_communes))} ± {np.round(np.std(longueurs_donde_communes))} nm")
-        
-        messagebox.showinfo("Info", "La mesure de longueur d'onde est finie")
 
         # Mettre à jour le graphique
         plot_graph(longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_donde_trouvees3, canvas_frame)

@@ -117,7 +117,7 @@ class PowerMeterApp(App):
         create_case(case_frame, case3_value, "Incertitude F4 (%):", 2, 0)
 
         def on_button_click():
-            Powers = [100, 46, 90, 11]
+            Powers = [87, 12, 64, 43]
             iterations = 0
             ytols = np.array([2.0, 2.0, 2.0])
                 
@@ -128,6 +128,7 @@ class PowerMeterApp(App):
                     break
             final_result, incertainty, wl_individuelles = wavelength_calculator(Powers, ytols, canvas_frame, result_value_label)
             graphe = plot_graph(wl_individuelles[0], wl_individuelles[1], wl_individuelles[2], canvas_frame)
+            messagebox.showinfo("Info", "La mesure de longueur d'onde est finie")
             return final_result, incertainty, graphe, ytols
 
 
