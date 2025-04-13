@@ -109,8 +109,11 @@ class PowerMeterApp(App):
         create_case(case_frame, case2_value, "Incertitude F3 (%):", 1, 0)
         create_case(case_frame, case3_value, "Incertitude F4 (%):", 2, 0)
 
+        self.ST = Acquisition()
+       
         def on_button_click():
-                    Powers = [87, 12, 64, 43]
+                    Powers = self.ST.Wavelength_thermistor()
+                    print(Powers)
                     iterations = 0
                     ytols = np.array([2.0, 2.0, 2.0])
                         

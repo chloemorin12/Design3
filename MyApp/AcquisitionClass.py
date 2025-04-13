@@ -17,6 +17,8 @@ class Acquisition:
         duration = 0.001
         self.sample_rate = 10000
         self.samples_to_read = int(duration * self.sample_rate)
+
+        self.wavelenght_tension = np.full((256, 1), np.nan)
         
     def assign_thermistor_positions(self):
         self.data = np.full((256, 2), np.nan)
@@ -86,21 +88,23 @@ class Acquisition:
                 rate=self.sample_rate,
                 sample_mode=AcquisitionType.FINITE,
                 samps_per_chan=self.samples_to_read)
-            
-            do_task.write(136, auto_start=True)
+
+            do_task.write(0, auto_start=True)
             data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
-            self.voltage_data[136] = np.mean(data)
-            do_task.write(153, auto_start=True)
+            self.wavelenght_tension[0] = np.mean(data)
+            do_task.write(7, auto_start=True)
             data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
-            self.voltage_data[153] = np.mean(data) 
-            do_task.write(170, auto_start=True)
+            self.wavelenght_tension[7] = np.mean(data) 
+            do_task.write(65, auto_start=True)
             data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
-            self.voltage_data[170] = np.mean(data) 
-            do_task.write(187, auto_start=True)
+            self.wavelenght_tension[65] = np.mean(data) 
+            do_task.write(113, auto_start=True)
             data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
-            self.voltage_data[187] = np.mean(data)  
-            data = np.hstack((self.data, self.voltage_data))
-            return self.voltage_data    
+            self.wavelenght_tension[113] = np.mean(data)  
+            powers = self.wavelenght_tension[~np.isnan(self.wavelenght_tension).any(axis=1)]
+            powers.tolist()
+            print(powers)
+            return powers  
     
     def fitting(self):
         diameter = 25
