@@ -113,11 +113,12 @@ class PowerMeterApp(App):
         self.pos_frame = tk.LabelFrame(self.graphs_frame, text="Position dans le temps")
         self.pos_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
         
+        values = self.device.get_temperature_from_device()
         fig = plt.figure(figsize=(5, 4))
         self.ax = fig.add_subplot(111)
         self.ax.set_xlim(-15, 15)
         self.ax.set_ylim(-15, 15)
-        self.ax.imshow(self.device.get_temperature_from_device()[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
+        self.ax.imshow(values[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
         self.pos_canvas = FigureCanvasTkAgg(fig, master=self.pos_frame)
         self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
         self.pos_canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
@@ -274,11 +275,12 @@ class PowerMeterApp(App):
         self.canvas.draw()
         self.canvas.flush_events()
 
-
+        values = self.device.get_temperature_from_device()
         self.ax.cla()  # Clears the axes
         self.ax.set_xlim(-15, 15)
         self.ax.set_ylim(-15, 15)
         self.ax.imshow(self.device.get_temperature_from_device()[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
+        self.ax.plot(values[2], values[3], 'kx', markersize=10, markeredgewidth=3)
         self.pos_canvas.draw()
         self.pos_canvas.flush_events()
 
