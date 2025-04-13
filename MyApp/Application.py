@@ -13,6 +13,9 @@ from tkinter import ttk
 from app import App
 from bindable import Bindable
 from base import Base
+from AcquisitionClass import Acquisition 
+import timeit
+import time
 
 class PowerMeterApp(App):
     def __init__(self):
@@ -112,8 +115,9 @@ class PowerMeterApp(App):
         
         fig = plt.figure(figsize=(5, 4))
         self.ax = fig.add_subplot(111)
-        self.ax.imshow(data_gradient_temperature(self.device.get_temperature_from_device()), origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
-        
+        self.ax.set_xlim(-15, 15)
+        self.ax.set_ylim(-15, 15)
+        self.ax.imshow(self.device.get_temperature_from_device()[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
         self.pos_canvas = FigureCanvasTkAgg(fig, master=self.pos_frame)
         self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
         self.pos_canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
@@ -244,7 +248,7 @@ class PowerMeterApp(App):
             if len(self.parameters[i]) == 2:
                 self.dico_parameters.update({self.parameters[i][0]:self.parameters[i][1]})
 
-        print(self.dico_parameters['parametre1'])
+        #print(self.dico_parameters['parametre1'])
         self.Évènements.append(self.get_time() + ' : '+'Le fichier de paramètres '+ filepath + ' a été chargé')
         #self.label_com.value_variable.set(self.get_time() + ' : '+'Le fichier de paramètres '+ filepath + ' a été chargé')
         self.label_com.config(text=self.Évènements[len(self.Évènements)-1]
@@ -268,27 +272,34 @@ class PowerMeterApp(App):
         self.canvas.draw()
         self.canvas.flush_events()
 
+
         self.ax.cla()  # Clears the axes
-        self.ax.imshow(data_gradient_temperature(self.device.get_temperature_from_device()), origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
+        self.ax.set_xlim(-15, 15)
+        self.ax.set_ylim(-15, 15)
+        self.ax.imshow(self.device.get_temperature_from_device()[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
         self.pos_canvas.draw()
         self.pos_canvas.flush_events()
 
     def update_loop(self):
-
+        
         self.device.update_from_device()
 
         power = self.device.power
-        thermistor_values = self.device.get_temperature_from_device()
-
+        #thermistor_values = self.device.get_temperature_from_device() # modifier pour données en temps réel
+        d = time.time()
         self.historique_temps_mesure.append(self.get_time())
-        self.historique_position_x.append(position(thermistor_values)[0])      # modifier pour données en temps réel
-        self.historique_position_y.append(position(thermistor_values)[1])      # modifier pour données en temps réel
-        self.historique_puissance.append(power)    
-        self.update_plot()
+        self.historique_position_x.append(self.device.get_temperature_from_device()[2])      # modifier pour données en temps réel
+        self.historique_position_y.append(self.device.get_temperature_from_device()[3])        # modifier pour données en temps réel
+        self.historique_puissance.append(power)
+        self.after(300, self.update_plot)  # Update the plot every 100 ms
+        #self.update_plot()
+        time.sleep(0.3)
 
         self.measurement_label.config(text=f"{power:.2f} mW")
-        self.position_label.config(text=f"(x={position(thermistor_values)[0]:.2f}, "f"y={position(thermistor_values)[1]:.2f})")
+        self.position_label.config(text=f"(x={self.device.get_temperature_from_device()[2]:.2f}, "f"y={self.device.get_temperature_from_device()[3]:.2f})")
        
+        f = time.time()
+        print('total', f-d)
 
         #last_pos = data_gradient_temperature()
         #self.plot_position.append(last_pos[0], last_pos[1])
@@ -366,6 +377,10 @@ class PowerMeterDevice(Bindable):
     def __init__(self):
         super().__init__()
 
+        self.supertest = Acquisition()
+        self.supertest.assign_thermistor_positions()
+        #print(self.supertest.data)
+
         """
         The variables are refreshed by get_xxx commands, which 
         fetch the actual values from the device.
@@ -404,16 +419,23 @@ class PowerMeterDevice(Bindable):
 
     def get_temperature_from_device(self):
 
+
+        self.supertest.Power_thermistor()
+        
+
+
+        #self.temperatu
         # self.temperature permet d'avoir la température de toutes les termistance (avant implantation aquisition)
         #self.temperature = [70,71,72,73,74,75,76,77,70] #[random.randrange(90,113,1), random.randrange(60,73,1),random.randrange(50,80,1),random.randrange(70,73,1),random.randrange(70,73,1),74,75, 76,70]  
         #print(self.temperature)
         #print(type(self.temperature))
-        if self.debug:
-            self.temperature = [random.randrange(70,73,1), random.randrange(70,73,1),random.randrange(70,73,1),random.randrange(70,73,1),random.randrange(70,73,1),72,74, 72,70]  
-        else:
-            pass # Update via USB
-
-        return self.temperature
+        #if self.debug:
+        #    self.temperature = [random.randrange(70,73,1), random.randrange(70,73,1),random.randrange(70,73,1),random.randrange(70,73,1),random.randrange(70,73,1),72,74, 72,70]  
+        #else:
+        #    pass # Update via USB
+        #temps = timeit.timeit('Acquisition().fitting()', number=1)
+        #print(temps)
+        return self.supertest.fitting()
 
     def get_wavelength_from_device(self):
         if self.debug:
@@ -424,10 +446,13 @@ class PowerMeterDevice(Bindable):
         return self.wavelength
 
     def update_from_device(self):
+        d = time.time()
         self.get_power_from_device()
         self.get_firmware_from_device()
         self.get_temperature_from_device()
         self.get_wavelength_from_device()
+        f = time.time()
+        print(f-d)
 
 
 

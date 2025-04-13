@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import nidaqmx
 import time
+import timeit
 import numpy as np
 from nidaqmx.constants import AcquisitionType
 from scipy.optimize import curve_fit
@@ -13,8 +14,8 @@ class Acquisition:
     def __init__(self):
         self.voltage_data = np.full((256, 1), np.nan)
         self.data = np.full((256, 1), np.nan)
-        duration = 0.01
-        self.sample_rate = 1000
+        duration = 0.001
+        self.sample_rate = 10000
         self.samples_to_read = int(duration * self.sample_rate)
         
     def assign_thermistor_positions(self):
@@ -65,9 +66,9 @@ class Acquisition:
                     self.voltage_data[i] = np.nan # retourne (x, y, voltage) pour chaucune des 61 thermistors
                     continue
                 if binary_str[-8] == '1':
+                    #print(np.shape(self.data))
+                    #print(np.shape(self.voltage_data))
                     self.data = np.hstack((self.data, self.voltage_data))
-                    print(self.data)
-                    print()
                     return self.data
                 
                 do_task.write(value, auto_start=True)
@@ -98,18 +99,24 @@ class Acquisition:
             do_task.write(187, auto_start=True)
             data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
             self.voltage_data[187] = np.mean(data)  
-            data = np.hstack((self.thermistor, self.voltage_data))
+            data = np.hstack((self.data, self.voltage_data))
             return self.voltage_data    
     
     def fitting(self):
         diameter = 25
         radius = diameter / 2
-        self.data = self.data[~np.isnan(self.data).any(axis=1)]
-        x, y, z = self.data[:, 0], self.data[:, 1], self.data[:, -1]
+        data = self.data[~np.isnan(self.data).any(axis=1)]
+        x, y, z = data[:, 0], data[:, 1], data[:, -1]
         initial_guess = [float(max(z)-min(z)), 0, 0, 2.5, 2.5, float(min(z))]
         bounds = ([0, -12.5, -12.5, 0, 0, -np.inf], [np.inf, 12.5, 12.5, np.inf, np.inf, np.inf])
         xy = np.vstack((x, y))   # isole x et y 
         params, _ = curve_fit(gaussian_2d, xy, z, p0=initial_guess, bounds=bounds)
+        A, x_peak, y_peak, sigma_x, sigma_y, offset = params
+        xi = np.linspace(-13, 13, 50)
+        yi = np.linspace(-13, 13, 50)
+        X_grid, Y_grid = np.meshgrid(xi, yi)
+        Z_fit = gaussian_2d((X_grid.ravel(), Y_grid.ravel()), *params).reshape(X_grid.shape)
+        return params, Z_fit, x_peak, y_peak
         #print(initial_guess)
         #print(params)
         #print(x[0], y[0])
@@ -138,10 +145,8 @@ class Acquisition:
         plt.grid(True)
         plt.show()
                    
-
-# Example usage:
+'''
 allo = Acquisition()
 allo.assign_thermistor_positions()
 allo.Power_thermistor()
-allo.Power_thermistor()
-allo.fitting()
+allo.fitting()'''
