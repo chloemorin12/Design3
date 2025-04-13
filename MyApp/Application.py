@@ -17,7 +17,7 @@ from AcquisitionClass import Acquisition
 import threading
 import time
 from Algorithm_wavelength import trouver_longueurs_donde, longueur_donde_commune, plot_graph, adjust_value, wavelength_calculator
-
+import numpy as np
 
 
 class PowerMeterApp(App):

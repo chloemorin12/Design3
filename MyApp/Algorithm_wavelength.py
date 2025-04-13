@@ -6,7 +6,7 @@ import matplotlib, sys
 matplotlib.use('TkAgg')
 import tkinter as tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,  NavigationToolbar2Tk
-
+import numpy as np
 from tkinter import filedialog, messagebox
 
 # Charger le fichier Excel
