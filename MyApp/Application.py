@@ -17,6 +17,7 @@ from AcquisitionClass import Acquisition
 import threading
 import time
 
+
 class PowerMeterApp(App):
     def __init__(self):
         App.__init__(self)
