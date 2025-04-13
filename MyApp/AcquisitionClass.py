@@ -13,12 +13,12 @@ class Acquisition:
     def __init__(self):
         self.voltage_data = np.full((256, 1), np.nan)
         self.data = np.full((256, 1), np.nan)
-        self.thermistor = np.full((256, 2), np.nan)
         duration = 0.01
         self.sample_rate = 1000
         self.samples_to_read = int(duration * self.sample_rate)
         
     def assign_thermistor_positions(self):
+        self.data = np.full((256, 2), np.nan)
         real_thermistor_positions = [
             [-6.25, -10.825317547305483], [-3.125, -10.825317547305483], [0.0, -10.825317547305483],
             [3.125, -10.825317547305483], [6.25, -10.825317547305483], [-7.8125, -8.118988160479113],
@@ -46,11 +46,10 @@ class Acquisition:
                            118,54,38,22,6,119,55,39,23,7]
         for i in range(len(real_thermistor_positions)):
             position = liste_thermistor_values[i]
-            self.thermistor[position] = real_thermistor_positions[i]   
-        return self.thermistor
+            self.data[position] = real_thermistor_positions[i]   
+        return self.data
         
     def Power_thermistor(self):
-        value = 0
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
             do_task.do_channels.add_do_chan("Dev1/port0/line0:7")
             ai_task.ai_channels.add_ai_voltage_chan("Dev1/ai7")
@@ -66,13 +65,14 @@ class Acquisition:
                     self.voltage_data[i] = np.nan # retourne (x, y, voltage) pour chaucune des 61 thermistors
                     continue
                 if binary_str[-8] == '1':
-                    self.data = np.hstack((self.thermistor, self.voltage_data))
+                    self.data = np.hstack((self.data, self.voltage_data))
                     print(self.data)
+                    print()
                     return self.data
                 
                 do_task.write(value, auto_start=True)
-                self.data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
-                self.voltage_data[i] = np.nanmean(self.data)   # retourne (x, y, voltage) pour chaucune des 61 thermistors
+                voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
+                self.voltage_data[i] = np.mean(voltage_therm_i)   # retourne (x, y, voltage) pour chaucune des 61 thermistors
                 
                 
             
@@ -105,9 +105,9 @@ class Acquisition:
         diameter = 25
         radius = diameter / 2
         self.data = self.data[~np.isnan(self.data).any(axis=1)]
-        x, y, z = self.data[:, 0], self.data[:, 1], self.data[:, 2]
+        x, y, z = self.data[:, 0], self.data[:, 1], self.data[:, -1]
         initial_guess = [float(max(z)-min(z)), 0, 0, 2.5, 2.5, float(min(z))]
-        bounds = ([0, -15, -15, 0, 0, -np.inf], [np.inf, 15, 15, np.inf, np.inf, np.inf])
+        bounds = ([0, -12.5, -12.5, 0, 0, -np.inf], [np.inf, 12.5, 12.5, np.inf, np.inf, np.inf])
         xy = np.vstack((x, y))   # isole x et y 
         params, _ = curve_fit(gaussian_2d, xy, z, p0=initial_guess, bounds=bounds)
         #print(initial_guess)
@@ -125,22 +125,16 @@ class Acquisition:
         Z_fit_masked = np.where(R <= radius, Z_fit, np.nan)
         
         plt.figure(figsize=(7, 6))
-        sc = plt.scatter(x, y, c=z, cmap='coolwarm', s=100, edgecolor='k', label='Data')
-        plt.plot(x_peak, y_peak, 'kx', markersize=10, markeredgewidth=3, label='Peak')
+        sc = plt.scatter(x, y, c=z, cmap='coolwarm', s=100, edgecolor='k')
+        plt.plot(x_peak, y_peak, 'kx', markersize=10, markeredgewidth=3)
         plt.contourf(X_grid, Y_grid, Z_fit_masked, levels=20, cmap='coolwarm', alpha=0.2)
         plt.colorbar(sc, label='Voltage')
-        plt.xlabel('X')
-        plt.ylabel('Y')
-        plt.title('2D Gaussian Fit to Thermistor Readings')
         plt.grid(True)
-        plt.legend()
         
         theta = np.linspace(0, 2 * np.pi, 100)
         circle_x = radius * np.cos(theta)
         circle_y = radius * np.sin(theta)
-        plt.plot(circle_x, circle_y, 'k--', label=f"Circle (D={diameter})")
-        
-        plt.axis("equal")
+        plt.plot(circle_x, circle_y, 'k--')
         plt.grid(True)
         plt.show()
                    
@@ -148,5 +142,6 @@ class Acquisition:
 # Example usage:
 allo = Acquisition()
 allo.assign_thermistor_positions()
+allo.Power_thermistor()
 allo.Power_thermistor()
 allo.fitting()
