@@ -56,7 +56,7 @@ class Acquisition:
             ai_task.ai_channels.add_ai_voltage_chan("Dev1/ai7")
             ai_task.timing.cfg_samp_clk_timing(
                 rate=self.sample_rate,
-                sample_mode=AcquisitionType.FINITE,
+                sample_mode=AcquisitionType.CONTINUOUS,
                 samps_per_chan=self.samples_to_read)
 
             for i in range(129):
@@ -73,6 +73,7 @@ class Acquisition:
                 
                 do_task.write(value, auto_start=True)
                 voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
+                time.sleep(0.001)
                 self.voltage_data[i] = np.mean(voltage_therm_i)   # retourne (x, y, voltage) pour chaucune des 61 thermistors
                 
                 

@@ -14,7 +14,7 @@ from app import App
 from bindable import Bindable
 from base import Base
 from AcquisitionClass import Acquisition 
-import timeit
+import threading
 import time
 
 class PowerMeterApp(App):
@@ -147,6 +147,7 @@ class PowerMeterApp(App):
         self.label_com = tk.Label(self.com_label_frame, text=self.get_time() + ' : ' + 'Démarrage Interface')
         self.label_com.grid( row=0, column=0, columnspan=1, padx=25, pady=10, sticky="nsew")
         #Changer la couleur du box3, ou trouver élément pour communiquer avec l'usager
+        
 
         
 
@@ -185,7 +186,7 @@ class PowerMeterApp(App):
         #self.bind_properties("is_refreshing", self.start_button, "is_disabled") # Permet de désactiver les boutons 
         #self.bind_properties("is_refreshing", self.wavelength_entry.entry, "is_disabled")
         
-        self.update_loop() # We update once at least
+        #self.update_loop() # We update once at least
         
 
     def get_time(self):
@@ -205,7 +206,8 @@ class PowerMeterApp(App):
                                           + '\n' + self.Évènements[len(self.Évènements)-3]
                                           + '\n' + self.Évènements[len(self.Évènements)-4]
                                           + '\n' + self.Évènements[len(self.Évènements)-5]) 
-           
+            #self.update_thread = threading.Thread(target=self.device.update_from_device, daemon=True)
+            #self.update_thread.start()
             
         else:
             self.is_refreshing = False
@@ -282,34 +284,34 @@ class PowerMeterApp(App):
 
     def update_loop(self):
         
-        self.device.update_from_device()
-
+        self.device.update_from_device
         power = self.device.power
         #thermistor_values = self.device.get_temperature_from_device() # modifier pour données en temps réel
+        _, _2, x_peak, y_peak = self.device.get_temperature_from_device()
         d = time.time()
+        
         self.historique_temps_mesure.append(self.get_time())
-        self.historique_position_x.append(self.device.get_temperature_from_device()[2])      # modifier pour données en temps réel
-        self.historique_position_y.append(self.device.get_temperature_from_device()[3])        # modifier pour données en temps réel
+        self.historique_position_x.append(x_peak)      # modifier pour données en temps réel
+        self.historique_position_y.append(y_peak)        # modifier pour données en temps réel
         self.historique_puissance.append(power)
-        self.after(300, self.update_plot)  # Update the plot every 100 ms
-        #self.update_plot()
-        time.sleep(0.3)
+        #self.after(0, self.update_plot)  # Update the plot
+        self.update_plot()
 
         self.measurement_label.config(text=f"{power:.2f} mW")
-        self.position_label.config(text=f"(x={self.device.get_temperature_from_device()[2]:.2f}, "f"y={self.device.get_temperature_from_device()[3]:.2f})")
+        
+        self.position_label.config(text=f"(x={x_peak:.2f}, "f"y={y_peak:.2f})")
        
         f = time.time()
         print('total', f-d)
+        
+        if self.is_refreshing:
+            self.after(300, self.update_loop)   # To-Do ajouter bouton pour modifier rate
 
         #last_pos = data_gradient_temperature()
         #self.plot_position.append(last_pos[0], last_pos[1])
         #self.plot_position.update_plot()
         
-        if self.is_refreshing:
-            self.after(300, self.update_loop)   # To-Do ajouter bouton pour modifier rate
         
-
-
     def click_save(self):
 
         filepath = filedialog.asksaveasfilename(
