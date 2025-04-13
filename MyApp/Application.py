@@ -5,7 +5,7 @@ from testChloe import data_gradient_temperature, position
 import matplotlib.pyplot as plt
 import matplotlib, sys
 matplotlib.use('TkAgg')
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from datetime import datetime
 from tkinter.messagebox import askyesno
 import tkinter as tk
