@@ -18,6 +18,7 @@ import threading
 import time
 from Algorithm_wavelength import trouver_longueurs_donde, longueur_donde_commune, plot_graph, adjust_value, wavelength_calculator
 import numpy as np
+import nidaqmx
 
 
 class PowerMeterApp(App):
@@ -76,6 +77,8 @@ class PowerMeterApp(App):
 
         main_frame = tk.Frame(self.tab_longeur_onde)
         main_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="n")
+
+        self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_change)
 
         puissance_wavelength = [500, 55, 499, 250] # Cette liste deviendra dans le futur les données de puissance des thermistances où les filtres
 
@@ -304,7 +307,35 @@ class PowerMeterApp(App):
         #self.bind_properties("is_refreshing", self.wavelength_entry.entry, "is_disabled")
         
         #self.update_loop() # We update once at least
-        
+    def angle_to_pulse_width_ms(self, angle_rad):
+            return 1.5 + (angle_rad / np.pi) * 0.5
+
+    def send_software_pwm(self, angle_rad=0.0, duration=0.5, channel="Dev1/port1/line0"):
+        pulse_width_ms = self.angle_to_pulse_width_ms(angle_rad)
+        period_ms = 20
+        high_time = pulse_width_ms / 1000
+        low_time = (period_ms - pulse_width_ms) / 1000
+
+        with nidaqmx.Task() as task:
+            task.do_channels.add_do_chan(channel)
+            start_time = time.time()
+
+            while time.time() - start_time < duration:
+                task.write(True)
+                time.sleep(high_time)
+                task.write(False)
+                time.sleep(low_time)
+
+    def on_tab_change(self, event):
+        selected_tab = event.widget.select()
+        tab_text = event.widget.tab(selected_tab, "text")
+    
+        if tab_text == "Longueur d'onde":
+            print("Longueur d'onde sélectionnée → Servo vers 180°")
+            self.send_software_pwm(angle_rad=np.pi)  # ≈ 180°
+        elif tab_text == "Puissance":
+            print("Puissance sélectionnée → Servo vers 0°")
+            self.send_software_pwm(angle_rad=0)  # Retour à 0°
 
     def get_time(self):
         return(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
