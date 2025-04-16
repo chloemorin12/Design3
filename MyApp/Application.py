@@ -486,8 +486,22 @@ class PowerMeterApp(App):
                     file.write(self.Évènements[i] + '\n')
 
 
-
     def click_clear(self):
+
+        
+        click = askyesno(title="Confirmation", message="Voulez-vous enregistrer les données aquisitionnées avant de mettre à zéro les données? ")
+        if click is True:  # User clicked "Yes"
+            self.click_save()
+            self.Évènements.append(self.get_time()+ ' : '+'Sauvarde des données aquisitionnées')
+            self.label_com.config(text=self.Évènements[len(self.Évènements)-1]
+                                          + '\n' + self.Évènements[len(self.Évènements)-2]
+                                          + '\n' + self.Évènements[len(self.Évènements)-3]
+                                          + '\n' + self.Évènements[len(self.Évènements)-4]
+                                          + '\n' + self.Évènements[len(self.Évènements)-5]) 
+            #self.save()  # Call the save method (to be implemented in the derived class)
+        elif click is False:  # User clicked "No"
+            pass
+
         self.historique_temps_mesure = []
         self.historique_puissance = []
         # Modifier axis selon tkinter
@@ -495,32 +509,14 @@ class PowerMeterApp(App):
         self.update_plot()
 
         # Historique communication
-        self.Évènements.append(self.get_time()+ ' : '+'Mise à zéro effectuée')
+        self.Évènements.append(self.get_time() + ' : '+'Mise à zéro effectuée')
         self.label_com.config(text=self.Évènements[len(self.Évènements)-1]
-                                          + '\n' + self.Évènements[len(self.Évènements)-2]
-                                          + '\n' + self.Évènements[len(self.Évènements)-3]
-                                          + '\n' + self.Évènements[len(self.Évènements)-4]
-                                          + '\n' + self.Évènements[len(self.Évènements)-5]) 
-        #self.label_com.value_variable.set(self.get_time()+ ' : '+'Mise à zéro effectuée')
-        
-        
-        #self.x_range = 10
-
-
-    # suggéré la sauvegarde avant de clear    
-    '''
-    def save(self):
-        # Implement the logic to save the collected data
-        filepath = filedialog.asksaveasfilename(
-            title="Save Data",
-            filetypes=[("CSV Files", "*.csv"), ("All Files", "*.*")]
-        )
-        if filepath:
-            with open(filepath, "w") as file:
-                # Write the collected data to the file
-                file.write("Collected data goes here")
-            Dialog.showinfo(title="Save Successful", message="Data saved successfully!")
-    '''
+                                            + '\n' + self.Évènements[len(self.Évènements)-2]
+                                            + '\n' + self.Évènements[len(self.Évènements)-3]
+                                            + '\n' + self.Évènements[len(self.Évènements)-4]
+                                            + '\n' + self.Évènements[len(self.Évènements)-5]) 
+     
+     
 
 class PowerMeterDevice(Bindable):
     debug = True
