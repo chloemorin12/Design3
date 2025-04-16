@@ -121,13 +121,13 @@ class PowerMeterApp(App):
         self.pos_frame = tk.LabelFrame(self.graphs_frame, text="Position dans le temps")
         self.pos_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
         
-        fig = plt.figure(figsize=(5, 4))
-        self.ax = fig.add_subplot(111)
+        self.fig = plt.figure(figsize=(5, 4))
+        self.ax = self.fig.add_subplot(111)
         self.ax.imshow(data_gradient_temperature(self.device.get_temperature_from_device()), origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
         self.ax.set_xlabel("Position X [cm]")
         self.ax.set_ylabel("Position Y [cm]")
         
-        self.pos_canvas = FigureCanvasTkAgg(fig, master=self.pos_frame)
+        self.pos_canvas = FigureCanvasTkAgg(self.fig, master=self.pos_frame)
         self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
         self.pos_canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
 
@@ -291,10 +291,15 @@ class PowerMeterApp(App):
         self.canvas.draw()
         self.canvas.flush_events()
 
+        if hasattr(self, 'colorbar') and self.colorbar:
+            self.colorbar.remove() # Clears the colourbars
         self.ax.cla()  # Clears the axes
-        self.ax.imshow(data_gradient_temperature(self.device.get_temperature_from_device()), origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
+        temperature_data = data_gradient_temperature(self.device.get_temperature_from_device())
+        im = self.ax.imshow(temperature_data, origin='lower', extent=(0, 5, 0, 5), cmap='coolwarm')
         self.ax.set_xlabel("Position X [cm]")
         self.ax.set_ylabel("Position Y [cm]")
+        self.colorbar = self.fig.colorbar(im, ax=self.ax)
+        self.colorbar.set_label("Température [°C]") 
         self.pos_canvas.draw()
         self.pos_canvas.flush_events()
 
