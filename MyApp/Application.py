@@ -485,6 +485,18 @@ class PowerMeterApp(App):
                 for i in range(len(self.Évènements)):
                     file.write(self.Évènements[i] + '\n')
 
+    def on_close(self):
+        '''
+        Pour quitter l'application et offrir la sauvegrade
+        '''
+        response = askyesno(
+            title="Save Data",
+            message="Do you want to save the collected data before quitting?",
+        )
+        if response is True:
+            self.click_save()
+        elif response is False:  
+            self.quit()  # 
 
     def click_clear(self):
 

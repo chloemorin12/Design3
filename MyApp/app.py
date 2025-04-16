@@ -170,6 +170,7 @@ class App(Bindable):
                 with redirect_stdout(io.StringIO()):
                     self.root.quit()
                     self.root = None
+    '''
     
     def on_close(self):
         """
@@ -186,4 +187,5 @@ class App(Bindable):
         elif response is False:  # User clicked "No"
             self.quit()  # Quit without saving
         # If the user cancels (response is None), do nothing
+    '''
     
