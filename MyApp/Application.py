@@ -176,6 +176,17 @@ class PowerMeterApp(App):
 
 
 
+        
+        
+
+
+
+
+
+
+
+
+
 
 
         self.Évènements = ['', '', '',''] # Liste des communications à enregistrer dans un fichier
@@ -249,6 +260,24 @@ class PowerMeterApp(App):
         self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
         self.pos_canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
         
+        
+
+         #TO ADD
+        self.wavelength_entry_label = tk.Label(self.actions_frame, text="Longueur d'onde:")
+        self.wavelength_entry_label.grid(row=0, column=6, pady=15, padx=5, sticky="w")
+
+        self.wavelength_entry = tk.Entry(self.actions_frame, state='disabled') #,"Entrer la longueur d'onde manuellement ou longueur d'onde mesurée:")
+        self.wavelength_entry.grid(row=0, column=7, pady=15, padx=5, sticky="w")
+        
+        self.wavelength_entry.delete(0, tk.END)  # Clear the entry field before inserting new text
+        self.wavelength_entry.insert(0, self.device.get_wavelength_from_device())  # donne la longueur d'onde mesurée par le puissance-mètre
+
+        self.wavelength_button = tk.Button(self.actions_frame, text="Entrer une longueur d'onde manuellement", command=self.enregistre_longueur_donde_manuel)
+        self.wavelength_button.grid(row=0, column=8, pady=15, padx=5, sticky="w")
+
+        self.wavelength_button = tk.Button(self.actions_frame, text="Valider", command=self.valider)
+        self.wavelength_button.grid(row=0, column=9, pady=15, padx=5, sticky="w")
+        #self.device.bind_properties("wavelength", self.wavelength_entry, "value_variable")
         
         size = 15
         #self.bigb_font = tk tkFont.Font(family='Helvetica', size=size, weight='bold')
@@ -524,6 +553,19 @@ class PowerMeterApp(App):
         elif response is False:  
             self.quit()  # 
 
+    #TO ADD
+    def enregistre_longueur_donde_manuel(self):
+        self.wavelength_entry.config(state="normal")
+        
+        #TO ADD
+    def valider(self):
+        self.wavelength_entry.config(state="disabled")
+        wavelength = self.wavelength_entry.get()
+        print(wavelength)
+        return wavelength
+
+        
+        
     def click_clear(self):
 
         
@@ -629,14 +671,13 @@ class PowerMeterDevice(Bindable):
         #temps = timeit.timeit('Acquisition().fitting()', number=1)
         #print(temps)
         return self.z
-
+    
     def get_wavelength_from_device(self):
-        if self.debug:
-            pass
-        else:
-            pass # Update via USB
-
-        return self.wavelength
+            if self.debug:
+                self.wavelength = 0
+            else:
+                pass # Update via USB
+            return self.wavelength
 
     def update_from_device(self):
         d = time.time()
