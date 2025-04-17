@@ -239,14 +239,14 @@ class PowerMeterApp(App):
         self.ax = self.fig.add_subplot(111)
         self.ax.set_xlim(-15, 15)
         self.ax.set_ylim(-15, 15)
-        
         self.ax.set_xlabel("Position X [cm]")
         self.ax.set_ylabel("Position Y [cm]")
-        
-        self.ax.imshow(values[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
+        im = self.ax.imshow(values[1], origin='lower', extent=(-15,15,-15,15), cmap='coolwarm')  #self.ax.imshow(values[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
         self.pos_canvas = FigureCanvasTkAgg(self.fig, master=self.pos_frame)
         self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
         self.pos_canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
+        self.colorbar = self.fig.colorbar(im, ax=self.ax)
+        self.colorbar.set_label("Température [°C]") 
 
 
         self.toolbar_frame_position = tk.Frame(self.pos_frame)
