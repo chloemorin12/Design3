@@ -10,7 +10,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,  NavigationTool
 from tkinter import filedialog, messagebox
 
 # Charger le fichier Excel
-file_path = r'C:/Users/ilitah1/Downloads/Power_meter_app/Design3/Absortion_filtres_reel.xlsx'  # chemin du fichier contenant la transmission des filtres
+file_path = r'Absortion_filtres_reel.xlsx'  # chemin du fichier contenant la transmission des filtres
 df = pd.read_excel(file_path)  # Charger les données à partir du fichier Excel
 
 filter_names = pd.read_excel(file_path, header=0).iloc[0, 1::2].tolist()
