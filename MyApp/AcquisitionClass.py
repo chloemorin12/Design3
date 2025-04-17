@@ -60,7 +60,7 @@ class Acquisition:
                 rate=self.sample_rate,
                 sample_mode=AcquisitionType.FINITE,
                 samps_per_chan=self.samples_to_read)
-
+          
             for i in range(129):
                 value = i
                 binary_str = format(value, '08b')
@@ -72,7 +72,11 @@ class Acquisition:
                     #print(np.shape(self.voltage_data))
                     self.data = np.hstack((self.data, self.voltage_data))
                     return self.data
-                
+                if value <= 7:
+                    do_task.write(value, auto_start=True)
+                    voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
+                    self.voltage_data[i] = np.mean(voltage_therm_i) + 0.5
+                    
                 do_task.write(value, auto_start=True)
                 voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
                 self.voltage_data[i] = np.mean(voltage_therm_i)   # retourne (x, y, voltage) pour chaucune des 61 thermistors

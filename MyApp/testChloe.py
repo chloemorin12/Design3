@@ -58,7 +58,7 @@ thermistance1 = thermistance1.apply(lambda col: col -ref, axis=0)  #subtract(ref
 
 # paramètre de la fonction de transfert (2e ordre)
 
-def puissance_calcul(temps, te):
+def puissance_calcul(temperature, te):
 
     puissance = []
 
@@ -69,7 +69,7 @@ def puissance_calcul(temps, te):
 
     # Modifier selon le profil de température
     #moyenne différence temp pour avoir énergie
-    for i in range(2, len(temps)):
+    for i in range(2, len(temperature)):
         
 
         #E = temps.iloc[i, :9].mean()
@@ -78,9 +78,9 @@ def puissance_calcul(temps, te):
         #P_t = E/k + (tau/k)*dE
 
             # 2e ordre
-        T_k = temps.iloc[i].mean()
-        T_k_1 = temps.iloc[i-1].mean()
-        T_k_2 = temps.iloc[i-2].mean()
+        T_k = temperature.iloc[i].mean()
+        T_k_1 = temperature.iloc[i-1].mean()
+        T_k_2 = temperature.iloc[i-2].mean()
         # Fctn_de_transfert 2e ordre
         P_t = c_0*T_k + c_1*T_k_1 + c_2*T_k_2
 
@@ -92,12 +92,12 @@ def puissance_calcul(temps, te):
 
 
 #Pour sortir les données
-#     
-#df['Puissance'] = puissance_calcul(thermistance1, t)
+     
+df['Puissance'] = puissance_calcul(thermistance1, t)
 
-#output_file = 'thermistance_echellon_with_puissance_dimanche_2.xlsx'
-#df.to_excel(output_file, index=False)
-#print(f"Data with power column saved to {output_file}")
+output_file = 'thermistance_echellon_with_puissance_dimanche_2.xlsx'
+df.to_excel(output_file, index=False)
+print(f"Data with power column saved to {output_file}")
 
 
 
