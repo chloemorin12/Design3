@@ -86,6 +86,22 @@ class PowerMeterApp(App):
         self.save_button.grid( row=0, column=5, padx=10, pady=10)
 
 
+        #TO ADD
+        self.wavelength_entry_label = tk.Label(self.actions_frame, text="Longueur d'onde:")
+        self.wavelength_entry_label.grid(row=0, column=6, pady=15, padx=5, sticky="w")
+
+        self.wavelength_entry = tk.Entry(self.actions_frame, state='disabled') #,"Entrer la longueur d'onde manuellement ou longueur d'onde mesurée:")
+        self.wavelength_entry.grid(row=0, column=7, pady=15, padx=5, sticky="w")
+        
+        self.wavelength_entry.delete(0, tk.END)  # Clear the entry field before inserting new text
+        self.wavelength_entry.insert(0, self.device.get_wavelength_from_device())  # donne la longueur d'onde mesurée par le puissance-mètre
+
+        self.wavelength_button = tk.Button(self.actions_frame, text="Entrer une longueur d'onde manuellement", command=self.enregistre_longueur_donde_manuel)
+        self.wavelength_button.grid(row=0, column=8, pady=15, padx=5, sticky="w")
+
+        self.wavelength_button = tk.Button(self.actions_frame, text="Valider", command=self.valider)
+        self.wavelength_button.grid(row=0, column=9, pady=15, padx=5, sticky="w")
+        #self.device.bind_properties("wavelength", self.wavelength_entry, "value_variable")
 
 
         # ajouter fonction zoomed in ? + save graph as is  (TO DO)
@@ -189,6 +205,7 @@ class PowerMeterApp(App):
         
         #self.wavelength_entry = LabelledEntry("Wavelength:", character_width=6)
         #self.wavelength_entry.grid_into(self.window, row=1, column=4, sticky="e")
+        #self.device.bind_properties("wavelength", self.wavelength_entry.entry, "value_variable")
         #self.firmware_label = Label()
         #self.firmware_label.grid_into(self.window, row=3, column=0, columnspan=3, padx=25, pady=10, sticky="w")
         
@@ -281,6 +298,8 @@ class PowerMeterApp(App):
     #    self.device.update_from_device()
     #    return self.device.power
     
+
+
     def update_plot(self):
         # with plt.style.context(self.style):
         #self.first_axis.plot(self.x, self.y, "k-")
@@ -366,7 +385,19 @@ class PowerMeterApp(App):
                                           + '\n' + self.Évènements[len(self.Évènements)-5]) 
         #self.label_com.value_variable.set(self.get_time()+ ' : '+'Mise à zéro effectuée')
         
-        
+
+    #TO ADD
+    def enregistre_longueur_donde_manuel(self):
+        self.wavelength_entry.config(state="normal")
+    
+    #TO ADD
+    def valider(self):
+        self.wavelength_entry.config(state="disabled")
+        wavelength = self.wavelength_entry.get()
+        print(wavelength)
+        return wavelength
+
+    
         #self.x_range = 10
 
 
@@ -442,10 +473,9 @@ class PowerMeterDevice(Bindable):
 
     def get_wavelength_from_device(self):
         if self.debug:
-            pass
+            self.wavelength = 0
         else:
             pass # Update via USB
-
         return self.wavelength
 
     def update_from_device(self):
