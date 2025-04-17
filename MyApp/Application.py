@@ -87,9 +87,9 @@ class PowerMeterApp(App):
         puissance_wavelength = [500, 55, 499, 250] # Cette liste deviendra dans le futur les données de puissance des thermistances où les filtres
 
         # Variables pour les trois cases
-        case1_value = tk.DoubleVar(value=1.0)  # Valeur initiale
-        case2_value = tk.DoubleVar(value=1.0)
-        case3_value = tk.DoubleVar(value=1.0)
+        case1_value = tk.DoubleVar(value=2.0)  # Valeur initiale
+        case2_value = tk.DoubleVar(value=2.0)
+        case3_value = tk.DoubleVar(value=2.0)
 
 
         # Fonction pour créer une case avec flèches
@@ -117,7 +117,7 @@ class PowerMeterApp(App):
         create_case(case_frame, case3_value, "Incertitude F4 (%):", 2, 0)
 
         def on_button_click():
-            Powers = [100, 46, 90, 11]
+            Powers = [500, 2000, 5000, 280]
             iterations = 0
             ytols = np.array([2.0, 2.0, 2.0])
                 
@@ -126,8 +126,16 @@ class PowerMeterApp(App):
                 iterations += 1
                 if wavelength_calculator(Powers, ytols, canvas_frame, result_value_label) != 0 or iterations == 98:
                     break
+            
+            case1_value.set(ytols[0])
+            case2_value.set(ytols[1])
+            case3_value.set(ytols[2])
+            if wavelength_calculator(Powers, ytols, canvas_frame, result_value_label) == 0:
+                messagebox.showinfo("Info", "Aucune longueur d'onde ne correspond aux puissances entrées")
+                return 0, 0
             final_result, incertainty, wl_individuelles = wavelength_calculator(Powers, ytols, canvas_frame, result_value_label)
-            graphe = plot_graph(wl_individuelles[0], wl_individuelles[1], wl_individuelles[2], canvas_frame)
+            graphe = plot_graph(wl_individuelles[0], wl_individuelles[1], wl_individuelles[2], final_result, incertainty, canvas_frame)
+            messagebox.showinfo("Info", "La mesure de longueur d'onde est finie")
             return final_result, incertainty, graphe, ytols
 
 
@@ -158,17 +166,7 @@ class PowerMeterApp(App):
         result_value_label.grid(row=2, column=1, padx=10, pady=5)
 
         # Fonction pour initialiser le graphique
-        plot_graph(None, None, None, canvas_frame)
-
-
-
-
-
-
-
-
-
-
+        plot_graph(None, None, None, 250, 0, canvas_frame)
 
 
 

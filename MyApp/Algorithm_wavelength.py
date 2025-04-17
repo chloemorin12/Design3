@@ -79,7 +79,7 @@ def adjust_value(var, increment):
     if 0 <= new_value <= 100:
         var.set(new_value)
 
-        
+
 # Fonction pour trouver les longueurs d'onde correspondant aux pourcentages donnés
 
 
@@ -102,9 +102,9 @@ def longueur_donde_commune(pourcentages, ytols, xtol=1):
 
 
 
-def plot_graph(longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_donde_trouvees3, canvas_frame):
+def plot_graph(longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_donde_trouvees3, wl_finale, err, canvas_frame):
         # Tracer les courbes d'absorption
-        fig, ax = plt.subplots(figsize=(8, 5))
+        fig, ax = plt.subplots(figsize=(10, 5))
 
         ax.plot(df['Wavelength_Filter1'], df['Absorption_Filter1'], label=filter_names[0], color='b')
         ax.plot(df['Wavelength_Filter2'], df['Absorption_Filter2'], label=filter_names[1], color='g')
@@ -121,7 +121,16 @@ def plot_graph(longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_d
         if longueurs_donde_trouvees3 is not None:
             ax.scatter(longueurs_donde_trouvees3, np.interp(longueurs_donde_trouvees3, df['Wavelength_Filter4'], df['Absorption_Filter4']),
                     color='c', zorder=5, label="Filtre 4 (Points trouvés)")
+        
+        n = 100  
+        alphas = np.linspace(1, 0, n)  
+        xs = np.linspace(-err, err, n)  
 
+        # Tracé du fond avec dégradé
+        for dx, alpha in zip(xs, alphas):
+            ax.axvline(wl_finale + dx, ymin=0, ymax=1, color='gray', alpha=alpha)
+        
+        ax.axvline(wl_finale, label="Longueur d'onde mesurée", color='k')
         # Ajouter des labels et une légende
         ax.set_xlabel('Longueur d\'onde (nm)')
         ax.set_ylabel('Absorption %')
@@ -158,15 +167,17 @@ def wavelength_calculator(Powers ,ytols, canvas_frame, label):
         print(f" Longueur d'onde itération 1 :{np.round(np.mean(longueurs_donde_communes))} nm")
         print("##################################################################################################")
         pourcentages, longueurs_donde_communes, wl_individuelles = corr_pourcentages(puissances, pourcentages, longueurs_donde_communes, ytols)
-        pourcentages, longueurs_donde_communes, wl_individuelles = corr_pourcentages(puissances, pourcentages, longueurs_donde_communes, ytols)
-        print(f" Longueur d'onde finale {np.round(np.mean(longueurs_donde_communes))} ± {np.round(np.std(longueurs_donde_communes))} nm")
-        
-        messagebox.showinfo("Info", "La mesure de longueur d'onde est finie")
+        if longueurs_donde_communes is None:
+            return 0
+        print("rendu")
+        #pourcentages, longueurs_donde_communes, wl_individuelles = corr_pourcentages(puissances, pourcentages, longueurs_donde_communes, ytols)
+        wl_finale, erreur = np.round(np.mean(longueurs_donde_communes)), np.round(np.std(longueurs_donde_communes))
+        print(f" Longueur d'onde finale {wl_finale} ± {erreur} nm")
 
         # Mettre à jour le graphique
-        plot_graph(longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_donde_trouvees3, canvas_frame)
-        label.config(text=f" {np.round(np.mean(longueurs_donde_communes))} ± {np.round(np.std(longueurs_donde_communes))} nm")
-        return np.round(np.mean(longueurs_donde_communes)), np.round(np.std(longueurs_donde_communes)), wl_individuelles
+        plot_graph(longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_donde_trouvees3, wl_finale, erreur, canvas_frame)
+        label.config(text=f" {wl_finale} ± {erreur} nm")
+        return wl_finale, erreur, wl_individuelles
     
     #except Exception as e:
         #print(f"Une exception s'est produite : {e}")
@@ -182,6 +193,9 @@ def corr_pourcentages(puissances, pourcentages, longueurs_donde_communes, ytols)
     # Calcul des longueurs d'onde correspondant aux pourcentages corrigés itération 2.
     longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_donde_trouvees3 = trouver_longueurs_donde(pourcentages, ytols)
     longueurs_donde_communes = longueur_donde_commune(pourcentages, ytols)
-    print(f" Longueur d'onde itération :{np.round(np.mean(longueurs_donde_communes))} nm")
     wl_individuelles = [longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_donde_trouvees3]
+    if longueurs_donde_communes is None:
+            return pourcentages, None, wl_individuelles
+    print(f" Longueur d'onde itération :{np.round(np.mean(longueurs_donde_communes))} nm")
+    
     return pourcentages, longueurs_donde_communes, wl_individuelles
