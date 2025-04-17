@@ -5,7 +5,7 @@ from testChloe import data_gradient_temperature, position, puissance_calcul
 import matplotlib.pyplot as plt
 import matplotlib, sys
 matplotlib.use('TkAgg')
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from datetime import datetime
 from tkinter.messagebox import askyesno
 import tkinter as tk
@@ -35,7 +35,7 @@ class PowerMeterApp(App):
         self.historique_position_y = []
 
         
-        self.root.title("PowerMeter")
+        self.root.title("Puissance-mètre")
 
         # Configure the root window to allow expansion
         self.root.grid_rowconfigure(0, weight=1)  # Make row 0 expandable
@@ -168,27 +168,6 @@ class PowerMeterApp(App):
 
 
 
-
-
-
-
-
-
-
-
-        
-        
-
-
-
-
-
-
-
-
-
-
-
         self.Évènements = ['', '', '',''] # Liste des communications à enregistrer dans un fichier
 
         self.actions_frame = tk.LabelFrame(self.tab_puissance, text="Actions")
@@ -241,7 +220,12 @@ class PowerMeterApp(App):
 
 
 
-        
+        self.toolbar_frame_puissance = tk.Frame(self.power_frame)
+        self.toolbar_frame_puissance.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
+        self.toolbar_puissance = NavigationToolbar2Tk(self.canvas, self.toolbar_frame_puissance)
+        self.toolbar_puissance.update()
+        self.toolbar_puissance.grid(row=0, column=0, sticky="ew")
+
 
 
         # Graphique de position
@@ -255,10 +239,22 @@ class PowerMeterApp(App):
         self.ax = self.fig.add_subplot(111)
         self.ax.set_xlim(-15, 15)
         self.ax.set_ylim(-15, 15)
+        
+        self.ax.set_xlabel("Position X [cm]")
+        self.ax.set_ylabel("Position Y [cm]")
+        
         self.ax.imshow(values[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
         self.pos_canvas = FigureCanvasTkAgg(self.fig, master=self.pos_frame)
         self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
         self.pos_canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
+
+
+        self.toolbar_frame_position = tk.Frame(self.pos_frame)
+        self.toolbar_frame_position.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
+        self.toolbar_position = NavigationToolbar2Tk(self.pos_canvas, self.toolbar_frame_position)
+        self.toolbar_position.update()
+        self.toolbar_position.grid(row=0, column=0, sticky="ew")
+
         
         
 
@@ -306,27 +302,6 @@ class PowerMeterApp(App):
         
 
         
-
-
-        '''''
-
-        self.autre = View(width=800, height=300)
-        self.autre.grid_into(self.window, row=2, column=0, pady=5, padx=5, sticky="nsew")
-
-        self.wavelength_entry = LabelledEntry("Wavelength:", character_width=6)
-        self.wavelength_entry.grid_into(self.button_group2, row=0, column=0, sticky="e")
-            
-        self.firmware_label = Label()
-        self.firmware_label.grid_into(self.button_group2, row=1, column=0, padx=25, pady=10, sticky="w")
-
-        # Barre de progression
-        self.progression = Level(width=800, height=30)
-        self.progression.grid_into(self.window, row=3, column=0, pady=25, padx=15)
-        # bindable pour lier l'avancement des fonction avec la barre de progression 
-
-    
-
-        '''
 
         
         #self.wavelength_entry = LabelledEntry("Wavelength:", character_width=6)
@@ -653,7 +628,7 @@ class PowerMeterDevice(Bindable):
         return self.firmware
 
     def get_temperature_from_device(self):
-
+        # Utilise les valeurs de tension pour l'instant et non de température !
 
         self.supertest.Power_thermistor()
         self.z = self.supertest.fitting()
