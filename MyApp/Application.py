@@ -590,7 +590,7 @@ class PowerMeterDevice(Bindable):
         and can be used direectly by the app.
         """
         self.power = 404
-        self.wavelength = 1064
+        self.wavelength = 1064 
         self.firmware = None
         self.temperature = []
         self.z = None 
