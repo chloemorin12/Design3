@@ -1,7 +1,7 @@
 
 from tkinter import filedialog, messagebox
 import random
-from testChloe import data_gradient_temperature, position
+from testChloe import data_gradient_temperature, position, puissance_calcul
 import matplotlib.pyplot as plt
 import matplotlib, sys
 matplotlib.use('TkAgg')
@@ -233,12 +233,14 @@ class PowerMeterApp(App):
         self.pos_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
         
         values = self.device.get_temperature_from_device()
-        fig = plt.figure(figsize=(5, 4))
-        self.ax = fig.add_subplot(111)
+        #fig = plt.figure(figsize=(5, 4))
+        #self.ax = fig.add_subplot(111)
+        self.fig = plt.figure(figsize=(5, 4))
+        self.ax = self.fig.add_subplot(111)
         self.ax.set_xlim(-15, 15)
         self.ax.set_ylim(-15, 15)
         self.ax.imshow(values[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
-        self.pos_canvas = FigureCanvasTkAgg(fig, master=self.pos_frame)
+        self.pos_canvas = FigureCanvasTkAgg(self.fig, master=self.pos_frame)
         self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
         self.pos_canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
         
@@ -422,21 +424,41 @@ class PowerMeterApp(App):
         self.canvas.draw()
         self.canvas.flush_events()
 
-        values = self.device.get_temperature_from_device()
+        #Changes
+        if hasattr(self, 'colorbar') and self.colorbar:
+            self.colorbar.remove() # Clears the colourbars
+
+        values = self.device.z# Modifier pour 
+
         self.ax.cla()  # Clears the axes
         self.ax.set_xlim(-15, 15)
         self.ax.set_ylim(-15, 15)
-        self.ax.imshow(self.device.get_temperature_from_device()[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
+        self.ax.set_xlabel("Position X [cm]")
+        self.ax.set_ylabel("Position Y [cm]")
+        #self.ax.imshow(self.device.get_temperature_from_device()[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
+        temperature_data = values[1]
+        im = self.ax.imshow(temperature_data, origin='lower', extent=(-15,15,-15,15), cmap='coolwarm')
         self.ax.plot(values[2], values[3], 'kx', markersize=10, markeredgewidth=3)
+        self.colorbar = self.fig.colorbar(im, ax=self.ax)
+        self.colorbar.set_label("Température [°C]") 
         self.pos_canvas.draw()
         self.pos_canvas.flush_events()
+
+
+
+       
+        
+        
+        
+
 
     def update_loop(self):
         
         self.device.update_from_device
         power = self.device.power
+        print(power)
         #thermistor_values = self.device.get_temperature_from_device() # modifier pour données en temps réel
-        _, _2, x_peak, y_peak = self.device.get_temperature_from_device()
+        _, _2, x_peak, y_peak = self.device.get_temperature_from_device() # maybe juste self.device.temperature
         d = time.time()
         
         self.historique_temps_mesure.append(self.get_time())
@@ -550,6 +572,9 @@ class PowerMeterDevice(Bindable):
         self.wavelength = 1064
         self.firmware = None
         self.temperature = []
+        self.inital_data_t_1 = [0]*61
+        self.inital_data_t_2 = [0]*61
+        self.z = None 
 
 
 
@@ -561,11 +586,21 @@ class PowerMeterDevice(Bindable):
 
 
     def get_power_from_device(self):
+        d = self.supertest.Power_thermistor()
+        print(d[0])
+        self.power = puissance_calcul(d[0], d[1])
+        print(self.power)
+
+
+        '''
         if self.debug:
-            self.power = random.randrange(800,1000,1)/100
+            #self.power = random.randrange(800,1000,1)/100
+            valeur = self.supertest.Power_thermistor()
+            self.power = valeur[0]
+            self.ref = valeur[1]
         else:
             pass # Update via USB
-
+        '''
         return self.power
 
     def get_firmware_from_device(self):
@@ -580,7 +615,7 @@ class PowerMeterDevice(Bindable):
 
 
         self.supertest.Power_thermistor()
-        
+        self.z = self.supertest.fitting()
 
 
         #self.temperatu
@@ -594,7 +629,7 @@ class PowerMeterDevice(Bindable):
         #    pass # Update via USB
         #temps = timeit.timeit('Acquisition().fitting()', number=1)
         #print(temps)
-        return self.supertest.fitting()
+        return self.z
 
     def get_wavelength_from_device(self):
         if self.debug:
@@ -607,7 +642,7 @@ class PowerMeterDevice(Bindable):
     def update_from_device(self):
         d = time.time()
         self.get_power_from_device()
-        self.get_firmware_from_device()
+        #self.get_firmware_from_device()
         self.get_temperature_from_device()
         self.get_wavelength_from_device()
         f = time.time()

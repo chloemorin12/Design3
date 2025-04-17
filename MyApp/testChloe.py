@@ -58,8 +58,39 @@ thermistance1 = thermistance1.apply(lambda col: col -ref, axis=0)  #subtract(ref
 
 # paramètre de la fonction de transfert (2e ordre)
 
-def puissance_calcul(temperature, te):
+def puissance_calcul( data, ref):
 
+    inital_data_t_1 = [0]*61
+    inital_data_t_2 = [0]*61
+
+
+    # changer pour si la liste de data a au moins 2 ou trois colonne, prendre les colonne (-2), (-3)
+
+
+    ref = [ref[1], ref[2]]
+    ref = np.mean(ref)
+      
+    
+    data = data[~np.isnan(data).any(axis=1)] # tension values 
+    data = data.T 
+
+    if data.shape[0] == 4:
+        inital_data_t_1 = data[-2]
+        inital_data_t_1 = inital_data_t_1 - ref
+    if data.shape[0] == 5:
+        inital_data_t_1 = data[-2]
+        inital_data_t_1 = inital_data_t_1 - ref
+        inital_data_t_2 = data[-3]
+        inital_data_t_2 = inital_data_t_2 - ref
+
+    print('t1', inital_data_t_1)
+    print('t2', inital_data_t_2)
+
+         
+
+    data = np.array(data[-1]) - ref
+
+    
     puissance = []
 
     #a_0, a_1, a_2 = inverse_transfer_function(0.85, 0.13, 1)
@@ -69,7 +100,7 @@ def puissance_calcul(temperature, te):
 
     # Modifier selon le profil de température
     #moyenne différence temp pour avoir énergie
-    for i in range(2, len(temperature)):
+    #for i in range(2, len(data)):
         
 
         #E = temps.iloc[i, :9].mean()
@@ -78,27 +109,36 @@ def puissance_calcul(temperature, te):
         #P_t = E/k + (tau/k)*dE
 
             # 2e ordre
-        T_k = temperature.iloc[i].mean()
-        T_k_1 = temperature.iloc[i-1].mean()
-        T_k_2 = temperature.iloc[i-2].mean()
+    T_k = np.mean(data)
+    T_k_1 = np.mean(inital_data_t_1)
+    T_k_2 = np.mean(inital_data_t_2)
         # Fctn_de_transfert 2e ordre
-        P_t = c_0*T_k + c_1*T_k_1 + c_2*T_k_2
-
+    P_t = c_0*T_k + c_1*T_k_1 + c_2*T_k_2
             
-        puissance.append(P_t)
 
-    puissance = [np.nan, np.nan] + puissance
-    return puissance
+    return P_t
 
 
 #Pour sortir les données
-     
-df['Puissance'] = puissance_calcul(thermistance1, t)
+'''
+from AcquisitionClass import Acquisition
+allo = Acquisition()
+allo.assign_thermistor_positions()
+d = allo.Power_thermistor()
+#print(d[0])
+test = puissance_calcul( d[0], d[1])
 
+
+
+
+
+
+
+#df['Puissance'] 
 output_file = 'thermistance_echellon_with_puissance_dimanche_2.xlsx'
 df.to_excel(output_file, index=False)
 print(f"Data with power column saved to {output_file}")
-
+'''
 
 
 
@@ -179,7 +219,7 @@ def get_position_v2(array_thermistor):
     '''
 
     params = array_thermistor #, _ = scipy.optimize.curve_fit(gaussian_2d, (x_data, y_data), z_data, p0=initial_guess)
-
+    print(params)
     A, x_peak, y_peak, sigma_x, sigma_y, offset = params
     print(f"Estimated heat peak at: ({x_peak:.2f}, {y_peak:.2f})")
 
@@ -193,7 +233,6 @@ def data_gradient_temperature(liste_temp):
         result = get_position_v2(liste_temp)
         return  result[0]
         
-
 def position(liste_temp):
         return [get_position_v2(liste_temp)[1], get_position_v2(liste_temp)[2]]
 

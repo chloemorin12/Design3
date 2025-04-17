@@ -18,6 +18,9 @@ class Acquisition:
         self.sample_rate = 10000
         self.samples_to_read = int(duration * self.sample_rate)
 
+        self.liste_ref =[]
+        self.liste_tension = []
+
         self.wavelenght_tension = np.full((256, 1), np.nan)
         
     def assign_thermistor_positions(self):
@@ -53,6 +56,7 @@ class Acquisition:
         return self.data
         
     def Power_thermistor(self):
+        
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
             do_task.do_channels.add_do_chan("Dev1/port0/line0:7")
             ai_task.ai_channels.add_ai_voltage_chan("Dev1/ai7")
@@ -62,6 +66,9 @@ class Acquisition:
                 samps_per_chan=self.samples_to_read)
           
             for i in range(129):
+                # 64 ref filtre
+                # 80 et 96 ref puissance
+
                 value = i
                 binary_str = format(value, '08b')
                 if binary_str[-4] == '1':
@@ -71,15 +78,24 @@ class Acquisition:
                     #print(np.shape(self.data))
                     #print(np.shape(self.voltage_data))
                     self.data = np.hstack((self.data, self.voltage_data))
-                    return self.data
+                    return self.data, self.liste_ref
                 if value <= 7:
                     do_task.write(value, auto_start=True)
                     voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
-                    self.voltage_data[i] = np.mean(voltage_therm_i) + 0.5
-                    
+                    self.voltage_data[i] = np.mean(voltage_therm_i) + 0.5  
+
+
+                if value == 64 or value == 80 or value == 96:    
+                    do_task.write(value, auto_start=True)
+                    voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
+                    self.liste_ref.append(np.mean(voltage_therm_i))
+
                 do_task.write(value, auto_start=True)
                 voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
                 self.voltage_data[i] = np.mean(voltage_therm_i)   # retourne (x, y, voltage) pour chaucune des 61 thermistors
+            
+
+
                 
                 
             
@@ -118,12 +134,16 @@ class Acquisition:
         initial_guess = [float(max(z)-min(z)), 0, 0, 2.5, 2.5, float(min(z))]
         bounds = ([0, -12.5, -12.5, 0, 0, -np.inf], [np.inf, 12.5, 12.5, np.inf, np.inf, np.inf])
         xy = np.vstack((x, y))   # isole x et y 
-        params, _ = curve_fit(gaussian_2d, xy, z, p0=initial_guess, bounds=bounds)
-        A, x_peak, y_peak, sigma_x, sigma_y, offset = params
-        xi = np.linspace(-13, 13, 50)
-        yi = np.linspace(-13, 13, 50)
-        X_grid, Y_grid = np.meshgrid(xi, yi)
-        Z_fit = gaussian_2d((X_grid.ravel(), Y_grid.ravel()), *params).reshape(X_grid.shape)
+        try:
+            params, _ = curve_fit(gaussian_2d, xy, z, p0=initial_guess, bounds=bounds)
+            A, x_peak, y_peak, sigma_x, sigma_y, offset = params
+            xi = np.linspace(-13, 13, 50)
+            yi = np.linspace(-13, 13, 50)
+            X_grid, Y_grid = np.meshgrid(xi, yi)
+            Z_fit = gaussian_2d((X_grid.ravel(), Y_grid.ravel()), *params).reshape(X_grid.shape)
+        except RuntimeError as e:
+            print("Error in curve fitting:", e)
+            return None, None, None, None
         
         #print(initial_guess)
         #print(params)
@@ -155,8 +175,8 @@ class Acquisition:
         plt.grid(True)
         plt.show()
                    
-'''
+
 allo = Acquisition()
 allo.assign_thermistor_positions()
 allo.Power_thermistor()
-allo.fitting()'''
+allo.fitting()
