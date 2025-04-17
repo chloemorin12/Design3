@@ -114,6 +114,7 @@ def puissance_calcul( data, ref):
     T_k_2 = np.mean(inital_data_t_2)
         # Fctn_de_transfert 2e ordre
     P_t = c_0*T_k + c_1*T_k_1 + c_2*T_k_2
+    print(P_t)
             
 
     return P_t

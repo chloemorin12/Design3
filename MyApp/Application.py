@@ -456,7 +456,7 @@ class PowerMeterApp(App):
         
         self.device.update_from_device
         power = self.device.power
-        print(power)
+        print('update loop', power)
         #thermistor_values = self.device.get_temperature_from_device() # modifier pour données en temps réel
         _, _2, x_peak, y_peak = self.device.get_temperature_from_device() # maybe juste self.device.temperature
         d = time.time()
@@ -575,7 +575,7 @@ class PowerMeterDevice(Bindable):
         self.inital_data_t_1 = [0]*61
         self.inital_data_t_2 = [0]*61
         self.z = None 
-
+        self.po = None
 
 
     # Fonction pour obtenir la dernière valeur de voltage de la thermistance
@@ -586,9 +586,9 @@ class PowerMeterDevice(Bindable):
 
 
     def get_power_from_device(self):
-        d = self.supertest.Power_thermistor()
-        print(d[0])
-        self.power = puissance_calcul(d[0], d[1])
+        #d = self.supertest.Power_thermistor()
+        print('fonction get power',self.po)
+        self.power = puissance_calcul(self.po[0], self.po[1])
         print(self.power)
 
 
@@ -609,7 +609,7 @@ class PowerMeterDevice(Bindable):
         else:
             pass # Update via USB
 
-        return self.power
+        return self.firmware
 
     def get_temperature_from_device(self):
 
@@ -641,6 +641,7 @@ class PowerMeterDevice(Bindable):
 
     def update_from_device(self):
         d = time.time()
+        self.po = self.supertest.Power_thermistor() # maybe retirer ca
         self.get_power_from_device()
         #self.get_firmware_from_device()
         self.get_temperature_from_device()
