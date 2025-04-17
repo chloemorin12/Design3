@@ -199,3 +199,17 @@ def corr_pourcentages(puissances, pourcentages, longueurs_donde_communes, ytols)
     print(f" Longueur d'onde itération :{np.round(np.mean(longueurs_donde_communes))} nm")
     
     return pourcentages, longueurs_donde_communes, wl_individuelles
+
+file_path_s_texturée = r'Correction spectrale.xlsx'  # chemin du fichier contenant l'absorption de la surface texturée'
+df2 = pd.read_excel(file_path_s_texturée)  # Charger les données à partir du fichier Excel
+surface_names = pd.read_excel(file_path_s_texturée, header=0).iloc[0, 1::2].tolist()
+
+# Renommer les colonnes 
+df2.columns = ['Wavelength_s_texturée', 'Absorption_s_texturée']
+df2['Absorption_s_texturée'] = pd.to_numeric(df2['Absorption_s_texturée'], errors='coerce')
+df2['Wavelength_s_texturée'] = pd.to_numeric(df2['Wavelength_s_texturée'], errors='coerce')
+
+def corr_spectrale(power, wl):
+    absorption_interp = np.interp(wl, df2['Wavelength_s_texturée'], df2['Absorption_s_texturée'])
+    power_corr = power*100/absorption_interp
+    return power_corr
