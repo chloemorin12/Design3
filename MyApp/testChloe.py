@@ -83,9 +83,6 @@ def puissance_calcul( data, ref):
         inital_data_t_2 = data[-3]
         inital_data_t_2 = inital_data_t_2 - ref
 
-    print('t1', inital_data_t_1)
-    print('t2', inital_data_t_2)
-
          
 
     data = np.array(data[-1]) - ref
@@ -220,9 +217,8 @@ def get_position_v2(array_thermistor):
     '''
 
     params = array_thermistor #, _ = scipy.optimize.curve_fit(gaussian_2d, (x_data, y_data), z_data, p0=initial_guess)
-    print(params)
+    
     A, x_peak, y_peak, sigma_x, sigma_y, offset = params
-    print(f"Estimated heat peak at: ({x_peak:.2f}, {y_peak:.2f})")
 
     x = np.linspace(0, 6, 100)
     y = np.linspace(0, 6, 100)

@@ -454,9 +454,8 @@ class PowerMeterApp(App):
 
     def update_loop(self):
         
-        self.device.update_from_device
+        self.device.update_from_device() # modif ici
         power = self.device.power
-        print('update loop', power)
         #thermistor_values = self.device.get_temperature_from_device() # modifier pour données en temps réel
         _, _2, x_peak, y_peak = self.device.get_temperature_from_device() # maybe juste self.device.temperature
         d = time.time()
@@ -568,14 +567,11 @@ class PowerMeterDevice(Bindable):
         The variables represent the latest values at all times
         and can be used direectly by the app.
         """
-        self.power = 0
+        self.power = 404
         self.wavelength = 1064
         self.firmware = None
         self.temperature = []
-        self.inital_data_t_1 = [0]*61
-        self.inital_data_t_2 = [0]*61
         self.z = None 
-        self.po = None
 
 
     # Fonction pour obtenir la dernière valeur de voltage de la thermistance
@@ -586,10 +582,8 @@ class PowerMeterDevice(Bindable):
 
 
     def get_power_from_device(self):
-        #d = self.supertest.Power_thermistor()
-        print('fonction get power',self.po)
-        self.power = puissance_calcul(self.po[0], self.po[1])
-        print(self.power)
+        self.supertest.Power_thermistor()
+        self.power = puissance_calcul(self.supertest.data , self.supertest.liste_ref)
 
 
         '''
@@ -641,7 +635,6 @@ class PowerMeterDevice(Bindable):
 
     def update_from_device(self):
         d = time.time()
-        self.po = self.supertest.Power_thermistor() # maybe retirer ca
         self.get_power_from_device()
         #self.get_firmware_from_device()
         self.get_temperature_from_device()

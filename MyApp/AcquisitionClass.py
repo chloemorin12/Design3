@@ -17,6 +17,8 @@ class Acquisition:
         duration = 0.001
         self.sample_rate = 10000
         self.samples_to_read = int(duration * self.sample_rate)
+        self.previous_params = None  # Store the last successful parameters
+
 
         self.liste_ref =[]
         self.liste_tension = []
@@ -123,7 +125,6 @@ class Acquisition:
             self.wavelenght_tension[113] = np.mean(data)  
             powers = self.wavelenght_tension[~np.isnan(self.wavelenght_tension).any(axis=1)]
             powers.tolist()
-            print(powers)
             return powers  
     
     def fitting(self):
@@ -134,6 +135,7 @@ class Acquisition:
         initial_guess = [float(max(z)-min(z)), 0, 0, 2.5, 2.5, float(min(z))]
         bounds = ([0, -12.5, -12.5, 0, 0, -np.inf], [np.inf, 12.5, 12.5, np.inf, np.inf, np.inf])
         xy = np.vstack((x, y))   # isole x et y 
+        '''
         try:
             params, _ = curve_fit(gaussian_2d, xy, z, p0=initial_guess, bounds=bounds)
             A, x_peak, y_peak, sigma_x, sigma_y, offset = params
@@ -144,6 +146,31 @@ class Acquisition:
         except RuntimeError as e:
             print("Error in curve fitting:", e)
             return None, None, None, None
+        '''
+
+        try:
+            # Attempt to fit the curve
+            params, _ = curve_fit(gaussian_2d, xy, z, p0=initial_guess, bounds=bounds)
+            self.previous_params = params  # Save the successful parameters
+        except RuntimeError as e:
+            print("Error in curve fitting:", e)
+            if self.previous_params is not None:
+                print("Using previous parameters.")
+                params = self.previous_params  # Use the last successful parameters
+            else:
+                print("No previous parameters available.")
+                return None, None, None, None
+
+        # Extract parameters
+        A, x_peak, y_peak, sigma_x, sigma_y, offset = params
+        xi = np.linspace(-13, 13, 200)
+        yi = np.linspace(-13, 13, 200)
+        X_grid, Y_grid = np.meshgrid(xi, yi)
+        Z_fit = gaussian_2d((X_grid.ravel(), Y_grid.ravel()), *params).reshape(X_grid.shape)
+        R = np.sqrt(X_grid**2 + Y_grid**2)
+        Z_fit_masked = np.where(R <= radius, Z_fit, np.nan)
+
+        return params, Z_fit_masked, x_peak, y_peak
         
         #print(initial_guess)
         #print(params)
