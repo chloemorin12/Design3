@@ -115,22 +115,27 @@ class PowerMeterApp(App):
         self.ST = Acquisition()
        
         def on_button_click():
-                    Powers = self.ST.Wavelength_thermistor()
-                    print(Powers)
-                    iterations = 0
-                    ytols = np.array([2.0, 2.0, 2.0])
-                        
-                    while wavelength_calculator(Powers, ytols, canvas_frame, result_value_label) == 0 and iterations < 99:
-                        ytols+=1
-                        iterations += 1
-                        if wavelength_calculator(Powers, ytols, canvas_frame, result_value_label) != 0 or iterations == 98:
-                            break
-                    final_result, incertainty, wl_individuelles = wavelength_calculator(Powers, ytols, canvas_frame, result_value_label)
-                    graphe = plot_graph(wl_individuelles[0], wl_individuelles[1], wl_individuelles[2], canvas_frame)
-                    messagebox.showinfo("Info", "La mesure de longueur d'onde est finie")
-                    return final_result, incertainty, graphe, ytols
-
-
+            Powers = [500, 300, 450, 320]
+            iterations = 0
+            ytols = np.array([2.0, 2.0, 2.0])
+                
+            while wavelength_calculator(Powers, ytols, canvas_frame, result_value_label) == 0 and iterations < 99:
+                ytols+=1
+                iterations += 1
+                if wavelength_calculator(Powers, ytols, canvas_frame, result_value_label) != 0 or iterations == 98:
+                    break
+            
+            case1_value.set(ytols[0])
+            case2_value.set(ytols[1])
+            case3_value.set(ytols[2])
+            if wavelength_calculator(Powers, ytols, canvas_frame, result_value_label) == 0:
+                messagebox.showinfo("Info", "Aucune longueur d'onde ne correspond aux puissances entrées")
+                return 0, 0
+            final_result, incertainty, wl_individuelles = wavelength_calculator(Powers, ytols, canvas_frame, result_value_label)
+            graphe = plot_graph(wl_individuelles[0], wl_individuelles[1], wl_individuelles[2], final_result, incertainty, canvas_frame)
+            messagebox.showinfo("Info", "La mesure de longueur d'onde est finie")
+            return final_result, incertainty, graphe, ytols
+    
 
         # Bouton pour lancer les calculs
         button = tk.Button(top_frame, text="Lancer les calculs", command=on_button_click, font=("Arial", 12), bg="lightblue")
@@ -158,7 +163,7 @@ class PowerMeterApp(App):
         result_value_label.grid(row=2, column=1, padx=10, pady=5)
 
         # Fonction pour initialiser le graphique
-        plot_graph(None, None, None, canvas_frame)
+        plot_graph(None, None, None, 250, 0, canvas_frame)
 
 
 
