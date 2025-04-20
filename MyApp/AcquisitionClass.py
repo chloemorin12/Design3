@@ -7,6 +7,7 @@ from nidaqmx.constants import AcquisitionType
 from scipy.optimize import curve_fit
 from Algorithm import steinhart_hart_resistance_to_temperature
 
+
 def gaussian_2d(coords, A, x0, y0, sigma_x, sigma_y, offset):
     x, y = coords
     return A * np.exp(-((x - x0)**2 / (2 * sigma_x**2) + (y - y0)**2 / (2 * sigma_y**2))) + offset
@@ -187,36 +188,6 @@ class Acquisition:
         Z_fit_masked = np.where(R <= radius, Z_fit, np.nan)
 
         return params, Z_fit_masked, x_peak, y_peak
-        
-        #print(initial_guess)
-        #print(params)
-        #print(x[0], y[0])
-        #print(params[0] * np.exp(-((x[0] - params[1])**2 / (2 * params[3]**2) + (y[0] - params[2])**2 / (2 * params[4]**2))) + params[5])
-        A, x_peak, y_peak, sigma_x, sigma_y, offset = params
-        #print(f"Fitted Peak: x = {x_peak}, y = {y_peak}")
-        
-        xi = np.linspace(-13, 13, 200)
-        yi = np.linspace(-13, 13, 200)
-        X_grid, Y_grid = np.meshgrid(xi, yi)
-        Z_fit = gaussian_2d((X_grid.ravel(), Y_grid.ravel()), *params).reshape(X_grid.shape)
-        R = np.sqrt(X_grid**2 + Y_grid**2)
-        Z_fit_masked = np.where(R <= radius, Z_fit, np.nan)
-        
-        return params, Z_fit_masked, x_peak, y_peak
-    
-        plt.figure(figsize=(7, 6))
-        sc = plt.scatter(x, y, c=z, cmap='coolwarm', s=100, edgecolor='k')
-        plt.plot(x_peak, y_peak, 'kx', markersize=10, markeredgewidth=3)
-        plt.contourf(X_grid, Y_grid, Z_fit_masked, levels=20, cmap='coolwarm', alpha=0.2)
-        plt.colorbar(sc, label='Voltage')
-        plt.grid(True)
-        
-        theta = np.linspace(0, 2 * np.pi, 100)
-        circle_x = radius * np.cos(theta)
-        circle_y = radius * np.sin(theta)
-        plt.plot(circle_x, circle_y, 'k--')
-        plt.grid(True)
-        plt.show()
                    
 '''
 allo = Acquisition()

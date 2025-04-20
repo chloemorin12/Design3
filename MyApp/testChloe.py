@@ -41,15 +41,15 @@ def inverse_transfer_function( Gain, w_n, z):
 
 
 
-file_path = r"C:\Users\chloe\5mm_bas_validation_copie.xlsx"
-df = pd.read_excel(file_path)
+#file_path = r"C:\Users\chloe\5mm_bas_validation_copie.xlsx"
+#df = pd.read_excel(file_path)
 
 
 
-thermistance1 = df.iloc[:, :9]
-ref = df.iloc[:, 9]
-t = pd.to_numeric(df.iloc[:, 10], errors='coerce')
-thermistance1 = thermistance1.apply(lambda col: col -ref, axis=0)  #subtract(ref, axis=0) #
+#thermistance1 = df.iloc[:, :9]
+##ref = df.iloc[:, 9]
+#t = pd.to_numeric(df.iloc[:, 10], errors='coerce')
+#thermistance1 = thermistance1.apply(lambda col: col -ref, axis=0)  #subtract(ref, axis=0) #
 
 
 
