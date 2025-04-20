@@ -5,6 +5,7 @@ import timeit
 import numpy as np
 from nidaqmx.constants import AcquisitionType
 from scipy.optimize import curve_fit
+from Algorithm import steinhart_hart_resistance_to_temperature
 
 def gaussian_2d(coords, A, x0, y0, sigma_x, sigma_y, offset):
     x, y = coords
@@ -56,9 +57,10 @@ class Acquisition:
             position = liste_thermistor_values[i]
             self.data[position] = real_thermistor_positions[i]   
         return self.data
-        
+    
+    
     def Power_thermistor(self):
-        
+        start_time = time.perf_counter()
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
             do_task.do_channels.add_do_chan("Dev1/port0/line0:7")
             ai_task.ai_channels.add_ai_voltage_chan("Dev1/ai7")
@@ -66,39 +68,53 @@ class Acquisition:
                 rate=self.sample_rate,
                 sample_mode=AcquisitionType.FINITE,
                 samps_per_chan=self.samples_to_read)
-          
-            for i in range(129):
-                # 64 ref filtre
-                # 80 et 96 ref puissance
 
+            for i in range(129):
                 value = i
                 binary_str = format(value, '08b')
                 if binary_str[-4] == '1':
                     self.voltage_data[i] = np.nan # retourne (x, y, voltage) pour chaucune des 61 thermistors
                     continue
                 if binary_str[-8] == '1':
-                    #print(np.shape(self.data))
-                    #print(np.shape(self.voltage_data))
                     self.data = np.hstack((self.data, self.voltage_data))
+
+                    max_value = np.nanmax(list(np.nanmax(float(row[-1]) for row in self.data)))
+                    print(max_value)
+                    stop_time = time.perf_counter()
+                    elapsed_time = stop_time - start_time
+                    print(f"Elapsed time: {elapsed_time:.2f} seconds")
+                    
                     return self.data, self.liste_ref
                 if value <= 7:
-                    do_task.write(value, auto_start=True)
-                    voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
-                    self.voltage_data[i] = np.mean(voltage_therm_i) + 0.5  
-
-
+                    self.voltage_data[i] = np.nan 
+                    continue
                 if value == 64 or value == 80 or value == 96:    
                     do_task.write(value, auto_start=True)
                     voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
                     self.liste_ref.append(np.mean(voltage_therm_i))
+                else:
+                    do_task.write(value, auto_start=True)
+                    voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
+                    voltage = np.mean(voltage_therm_i)
+                    voltages = np.array([9.51, 9.25, 8.55, 7.9, 7.6, 7.2, 6.65 , 5.5, 5.1, 1.9])
+                    temperatures = np.array([90, 85, 80, 75, 70, 65, 60 ,55, 50, 22])
+                    coeffs = np.polyfit(voltages, temperatures, deg=1)
+                    poly_func = np.poly1d(coeffs)
+                    temp = poly_func(voltage)
+                    #A, B, C = self.params
+                    #temperature = steinhart_hart(voltage, A, B, C)
+                    #temperature = steinhart_hart_resistance_to_temperature(resistance, [0.00088692, 0.00025122, 0.00000019716])
+                    self.voltage_data[i] = temp
+                    time.sleep(0.001)
 
-                do_task.write(value, auto_start=True)
-                voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
-                self.voltage_data[i] = np.mean(voltage_therm_i)   # retourne (x, y, voltage) pour chaucune des 61 thermistors
-            
 
-
-                
+    def Curve_temp_voltage(self):
+        voltages = np.array([9.51, 9.25, 8.55, 7.9, 7.6, 7.2, 6.65 , 5.5, 5.1, 1.9])
+        temperatures = np.array([100, 95, 90, 85, 80, 75, 70 ,60, 55, 22])    
+        temperatures_kelvin = temperatures + 273.15
+        initial_guess = [1e-3, 1e-4, 1e-7]
+        self.params, covariance = curve_fit(steinhart_hart_resistance_to_temperature, voltages, temperatures_kelvin, p0=initial_guess)
+        return self.params
                 
             
                 
@@ -202,8 +218,9 @@ class Acquisition:
         plt.grid(True)
         plt.show()
                    
-
+'''
 allo = Acquisition()
 allo.assign_thermistor_positions()
 allo.Power_thermistor()
 allo.fitting()
+'''
