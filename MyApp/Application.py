@@ -33,6 +33,7 @@ class PowerMeterApp(App):
         self.historique_temps_mesure = []
         self.historique_position_x = []
         self.historique_position_y = []
+        self.wl = self.device.wavelength
 
         
         self.root.title("Puissance-mètre")
@@ -134,6 +135,15 @@ class PowerMeterApp(App):
             final_result, incertainty, wl_individuelles = wavelength_calculator(Powers, ytols, canvas_frame, result_value_label)
             graphe = plot_graph(wl_individuelles[0], wl_individuelles[1], wl_individuelles[2], final_result, incertainty, canvas_frame)
             messagebox.showinfo("Info", "La mesure de longueur d'onde est finie")
+
+            
+            self.wavelength_entry.config(state='normal')  # Clear the entry field before inserting new text
+            self.wavelength_entry.delete(0, tk.END)  # Clear the entry field before inserting new text
+            self.wavelength_entry.insert(0, str(final_result))  # donne la longueur d'onde mesurée par le puissance-mètre
+            self.wl = final_result
+            self.wavelength_entry.config(state='disabled')  # Clear the entry field before inserting new text
+
+
             return final_result, incertainty, graphe, ytols
     
 
@@ -262,11 +272,12 @@ class PowerMeterApp(App):
         self.wavelength_entry_label = tk.Label(self.actions_frame, text="Longueur d'onde:")
         self.wavelength_entry_label.grid(row=0, column=6, pady=15, padx=5, sticky="w")
 
-        self.wavelength_entry = tk.Entry(self.actions_frame, state='disabled') #,"Entrer la longueur d'onde manuellement ou longueur d'onde mesurée:")
+        self.wavelength_entry = tk.Entry(self.actions_frame, state='normal') #,"Entrer la longueur d'onde manuellement ou longueur d'onde mesurée:")
         self.wavelength_entry.grid(row=0, column=7, pady=15, padx=5, sticky="w")
-        
+                
         self.wavelength_entry.delete(0, tk.END)  # Clear the entry field before inserting new text
-        self.wavelength_entry.insert(0, self.device.get_wavelength_from_device())  # donne la longueur d'onde mesurée par le puissance-mètre
+        self.wavelength_entry.insert(0, self.wl)  # donne la longueur d'onde mesurée par le puissance-mètre
+        self.wavelength_entry.config(state="disabled")  # Disable the entry field
 
         self.wavelength_button = tk.Button(self.actions_frame, text="Entrer une longueur d'onde manuellement", command=self.enregistre_longueur_donde_manuel)
         self.wavelength_button.grid(row=0, column=8, pady=15, padx=5, sticky="w")
@@ -535,9 +546,8 @@ class PowerMeterApp(App):
         #TO ADD
     def valider(self):
         self.wavelength_entry.config(state="disabled")
-        wavelength = self.wavelength_entry.get()
-        print(wavelength)
-        return wavelength
+        self.wl = self.wavelength_entry.get()
+        return self.wl
 
         
         
