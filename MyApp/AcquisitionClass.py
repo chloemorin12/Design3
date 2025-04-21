@@ -105,8 +105,7 @@ class Acquisition:
                     #print(max_value)
                     stop_time = time.perf_counter()
                     elapsed_time = stop_time - start_time
-                    print(f"Elapsed time: {elapsed_time:.2f} seconds")
-                    
+                    print(f"Elapsed time: {elapsed_time:.2f} seconds")                    
                     return self.data, self.liste_ref, self.liste_voltage, self.liste_tension_ref
                 if value <= 7:
                     self.voltage_data[i] = np.nan 

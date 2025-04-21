@@ -498,11 +498,11 @@ class PowerMeterApp(App):
         # with plt.style.context(self.style):
         #self.first_axis.plot(self.x, self.y, "k-")
         self.ax_puissance.cla()  # Clears the axes
-        #self.ax_puissance.plot(range(len(self.historique_temps_mesure)), self.historique_puissance)  # modifier axe des x ?
-        if len(self.historique_puissance) > 20:
-            self.ax_puissance.plot(range(len(self.historique_temps_mesure[-20:])), self.historique_puissance[-20:])  # modifier axe des x ?
-        else:
-            self.ax_puissance.plot(range(len(self.historique_temps_mesure)), self.historique_puissance)  # modifier axe des x ?
+        self.ax_puissance.plot(range(len(self.historique_temps_mesure)), self.historique_puissance)  # modifier axe des x ?
+        #if len(self.historique_puissance) > 20:
+        #    self.ax_puissance.plot(range(len(self.historique_temps_mesure[-20:])), self.historique_puissance[-20:])  # modifier axe des x ?
+        #else:
+        #    self.ax_puissance.plot(range(len(self.historique_temps_mesure)), self.historique_puissance)  # modifier axe des x ?
         self.canvas.draw()
         self.canvas.flush_events()
         self.ax_puissance.set_ylabel("Puissance [W]")

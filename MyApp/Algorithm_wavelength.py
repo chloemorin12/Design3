@@ -200,7 +200,7 @@ def corr_pourcentages(puissances, pourcentages, longueurs_donde_communes, ytols)
     
     return pourcentages, longueurs_donde_communes, wl_individuelles
 
-file_path_s_texturée = r'Correction spectrale.xlsx'  # chemin du fichier contenant l'absorption de la surface texturée'
+file_path_s_texturée = r'absorption_laserax_1.xlsx'  # chemin du fichier contenant l'absorption de la surface texturée'
 df2 = pd.read_excel(file_path_s_texturée)  # Charger les données à partir du fichier Excel
 surface_names = pd.read_excel(file_path_s_texturée, header=0).iloc[0, 1::2].tolist()
 

@@ -85,8 +85,6 @@ def puissance_calcul( data, ref):
         inital_data_t_2 = data[-3]
         inital_data_t_2 = inital_data_t_2 - ref
 
-         
-
     data = np.array(data[-1]) - ref
 
     
@@ -108,9 +106,9 @@ def puissance_calcul( data, ref):
         #P_t = E/k + (tau/k)*dE
 
             # 2e ordre
-    T_k = np.mean(data)
-    T_k_1 = np.mean(inital_data_t_1)
-    T_k_2 = np.mean(inital_data_t_2)
+    T_k = np.max(data)
+    T_k_1 = np.max(inital_data_t_1)
+    T_k_2 = np.max(inital_data_t_2)
         # Fctn_de_transfert 2e ordre
     P_t = c_0*T_k + c_1*T_k_1 + c_2*T_k_2
     print(P_t)
