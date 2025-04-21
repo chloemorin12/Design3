@@ -19,11 +19,14 @@ import time
 from Algorithm_wavelength import trouver_longueurs_donde, longueur_donde_commune, plot_graph, adjust_value, wavelength_calculator
 import numpy as np
 import nidaqmx
+from nidaqmx.errors import DaqError
 
 
 class PowerMeterApp(App):
     def __init__(self):
         App.__init__(self)
+        self.root.option_add("*Font", "Segoe 10")
+        
 
         self.device = PowerMeterDevice()
         self.is_refreshing = False
@@ -180,96 +183,121 @@ class PowerMeterApp(App):
 
         self.Évènements = ['', '', '',''] # Liste des communications à enregistrer dans un fichier
 
-        self.actions_frame = tk.LabelFrame(self.tab_puissance, text="Actions")
+        self.actions_frame = tk.LabelFrame(self.tab_puissance, text="Actions", bg="#f0f4f8", fg="#2c3e50",
+                                            font=("Segoe UI", 10, "bold"), bd=1, relief="solid")
         self.actions_frame.grid(row=0, column=0, columnspan=3, sticky="ew", padx=10, pady=5)
 
-        # Démarrer/Arrêter
-        self.start_button = tk.Button(self.actions_frame, text = "Démarrer", command=self.click_start)
+        button_cfg = dict(font=("Segoe UI", 10, "bold"), relief="groove", padx=10, pady=5, highlightthickness=1, bd=2, activebackground="#7f8c8d")
+
+        self.start_button = tk.Button(self.actions_frame, text="Démarrer", command=self.click_start,
+                                      bg="#95a5a6", fg="white", **button_cfg)
         self.start_button.grid(row=0, column=1, pady=15, padx=5, sticky="w")
 
-        # Indicateur marche/arret
-        #self.running_indicator = BooleanIndicator(self.actions_frame,diameter=25)
-        #self.running_indicator.grid(self.box, row=0, column=0, pady=15, padx=5)
-
-        # Mise à zéro : Initialisation prise de donnée ? Détecte si la température est trop élevée ?
-        self.misea0 = tk.Button(self.actions_frame, text="Mise à zéro", command=self.click_clear)
+        self.misea0 = tk.Button(self.actions_frame, text="Mise à zéro", command=self.click_clear,
+                                bg="#95a5a6", fg="white", **button_cfg)
         self.misea0.grid(row=0, column=2, pady=15, padx=5)
 
-        # Paramètre : Permet d'aller choisir un fichier avec les valeurs ?
-        self.paramètre = tk.Button(self.actions_frame, text="Paramètres", command=self.click_chose_parametres)
+        self.paramètre = tk.Button(self.actions_frame, text="Paramètres", command=self.click_chose_parametres,
+                                   bg="#95a5a6", fg="white", **button_cfg)
         self.paramètre.grid(row=0, column=3, pady=15, padx=5)
 
-        # Connexion : Permet de se connecter en un clic peut importe le port de connexion utilisé
-        # Ouverture d'une autre fenêtre ?  radiobutton
-        self.connexion = tk.Button(self.actions_frame, text="Connexion")
+        self.connexion = tk.Button(self.actions_frame, text="Connexion",
+                                   bg="#95a5a6", fg="white", **button_cfg)
         self.connexion.grid(row=0, column=4, pady=15, padx=5)
 
-        self.save_button = tk.Button(self.actions_frame, text="Enregister les données", command=self.click_save)
-        self.save_button.grid( row=0, column=5, padx=10, pady=10)
+        self.save_button = tk.Button(self.actions_frame, text="Enregistrer les données", command=self.click_save,
+                                     bg="#95a5a6", fg="white", **button_cfg)
+        self.save_button.grid(row=0, column=5, padx=10, pady=10)
 
-
-
-
-        # ajouter fonction zoomed in ? + save graph as is  (TO DO)
-        # http://pythonguis.com/tutorials/plotting-matplotlib/
-
-        # Graphique de puissance
-        self.graphs_frame = tk.Frame(self.tab_puissance)
+        # --- Graphique de puissance ---
+        self.graphs_frame = tk.Frame(self.tab_puissance, bg="#f0f4f8")
         self.graphs_frame.grid(row=1, column=0, columnspan=3, sticky="ew", padx=10, pady=5)
-        
-        self.power_frame = tk.LabelFrame(self.graphs_frame, text="Puissance dans le temps")
+
+        self.power_frame = tk.LabelFrame(self.graphs_frame, text="Puissance dans le temps",
+                                         bg="#f0f4f8", fg="#2c3e50", font=("Segoe UI", 10, "bold"), bd=1, relief="solid")
         self.power_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
-        
+
         self.plot_puissance = plt.figure(figsize=(5, 4))
         self.ax_puissance = self.plot_puissance.add_subplot(111)
-        self.ax_puissance.plot(self.historique_temps_mesure, self.historique_puissance)
+        self.ax_puissance.set_facecolor("#ffffff")
+        self.ax_puissance.grid(True, linestyle="--", alpha=0.3)
+        self.ax_puissance.set_title("Historique de Puissance", fontsize=11, color="#2c3e50")
+        self.ax_puissance.tick_params(colors="#2c3e50")
+        self.ax_puissance.spines['top'].set_visible(False)
+        self.ax_puissance.spines['right'].set_visible(False)
 
         self.canvas = FigureCanvasTkAgg(self.plot_puissance, master=self.power_frame)
         self.canvas_widget = self.canvas.get_tk_widget()
         self.canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
 
-
-
-        self.toolbar_frame_puissance = tk.Frame(self.power_frame)
+        self.toolbar_frame_puissance = tk.Frame(self.power_frame, bg="#f0f4f8")
         self.toolbar_frame_puissance.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
         self.toolbar_puissance = NavigationToolbar2Tk(self.canvas, self.toolbar_frame_puissance)
         self.toolbar_puissance.update()
         self.toolbar_puissance.grid(row=0, column=0, sticky="ew")
 
 
-
         # Graphique de position
-        self.pos_frame = tk.LabelFrame(self.graphs_frame, text="Position dans le temps")
+        self.pos_frame = tk.LabelFrame(self.graphs_frame, text="Position dans le temps",
+                                       bg="#f0f4f8", fg="#2c3e50", font=("Segoe UI", 10, "bold"), bd=1, relief="solid")
         self.pos_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
-        
-        values = self.device.get_temperature_from_device()
-        #fig = plt.figure(figsize=(5, 4))
-        #self.ax = fig.add_subplot(111)
+
         self.fig = plt.figure(figsize=(5, 4))
         self.ax = self.fig.add_subplot(111)
         self.ax.set_xlim(-15, 15)
         self.ax.set_ylim(-15, 15)
         self.ax.set_xlabel("Position X [cm]")
         self.ax.set_ylabel("Position Y [cm]")
-        im = self.ax.imshow(values[1], origin='lower', extent=(-15,15,-15,15), cmap='coolwarm')  #self.ax.imshow(values[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
-        self.pos_canvas = FigureCanvasTkAgg(self.fig, master=self.pos_frame)
-        self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
-        self.pos_canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
-        self.colorbar = self.fig.colorbar(im, ax=self.ax)
-        self.colorbar.set_label("Température [°C]") 
+        self.ax.set_facecolor("#ffffff")
+        self.ax.grid(True, linestyle="--", alpha=0.3)
+        self.ax.set_title("Carte de Température", fontsize=11)
 
+        try:
+            values = self.device.get_temperature_from_device()
+            im = self.ax.imshow(values[1], origin='lower', extent=(-15,15,-15,15), cmap='coolwarm')
+            self.pos_canvas = FigureCanvasTkAgg(self.fig, master=self.pos_frame)
+            self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
+            self.pos_canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
 
-        self.toolbar_frame_position = tk.Frame(self.pos_frame)
-        self.toolbar_frame_position.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
-        self.toolbar_position = NavigationToolbar2Tk(self.pos_canvas, self.toolbar_frame_position)
-        self.toolbar_position.update()
-        self.toolbar_position.grid(row=0, column=0, sticky="ew")
+            self.colorbar = self.fig.colorbar(im, ax=self.ax)
+            self.colorbar.set_label("Température [°C]")
+
+            self.toolbar_frame_position = tk.Frame(self.pos_frame, bg="#f0f4f8")
+            self.toolbar_frame_position.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
+            self.toolbar_position = NavigationToolbar2Tk(self.pos_canvas, self.toolbar_frame_position)
+            self.toolbar_position.update()
+            self.toolbar_position.grid(row=0, column=0, sticky="ew")
+
+        except (TypeError, AttributeError, DaqError) as e:
+            print("Le DAQ n'est pas connecté: ", e)
+
+        # --- Données mesurées ---
+        self.measurement_label = tk.Label(self.power_frame, text="--- mW",
+                                          font=("Segoe UI", 16, "bold"), fg="#1e3d59", bg="#f0f4f8")
+        self.measurement_label.grid(row=2, column=0, pady=15, padx=5)
+
+        self.position_label = tk.Label(self.pos_frame, text="---",
+                                       font=("Segoe UI", 12, "bold"), fg="#1e3d59", bg="#f0f4f8")
+        self.position_label.grid(row=2, column=0, pady=15, padx=5, sticky="nsew")
+
+        # --- Frame Communication ---
+        self.communication_frame = tk.Frame(self.tab_puissance, bg="#f0f4f8")
+        self.communication_frame.grid(row=3, column=0, columnspan=3, sticky="ew", padx=10, pady=5)
+
+        self.com_label_frame = tk.LabelFrame(self.communication_frame, text="Communication",
+                                             bg="#f0f4f8", fg="#2c3e50", font=("Segoe UI", 10, "bold"), bd=1, relief="solid")
+        self.com_label_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+
+        self.label_com = tk.Label(self.com_label_frame, text="Démarrage Interface",
+                                  font=("Segoe UI", 9), bg="#f0f4f8", fg="#2c3e50", justify="left")
+        self.label_com.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
+
 
         
         
 
          #TO ADD
-        self.wavelength_entry_label = tk.Label(self.actions_frame, text="Longueur d'onde:")
+        self.wavelength_entry_label = tk.Label(self.actions_frame, text="Longueur d'onde:", font=("Segoe UI", 10), bg="#f0f4f8", fg="#2c3e50")
         self.wavelength_entry_label.grid(row=0, column=6, pady=15, padx=5, sticky="w")
 
         self.wavelength_entry = tk.Entry(self.actions_frame, state='normal') #,"Entrer la longueur d'onde manuellement ou longueur d'onde mesurée:")
@@ -279,18 +307,18 @@ class PowerMeterApp(App):
         self.wavelength_entry.insert(0, self.wl)  # donne la longueur d'onde mesurée par le puissance-mètre
         self.wavelength_entry.config(state="disabled")  # Disable the entry field
 
-        self.wavelength_button = tk.Button(self.actions_frame, text="Entrer une longueur d'onde manuellement", command=self.enregistre_longueur_donde_manuel)
+        self.wavelength_button = tk.Button(self.actions_frame, text="Entrer une longueur d'onde manuellement", command=self.enregistre_longueur_donde_manuel, bg="#95a5a6", fg="white", **button_cfg)
         self.wavelength_button.grid(row=0, column=8, pady=15, padx=5, sticky="w")
 
-        self.wavelength_button = tk.Button(self.actions_frame, text="Valider", command=self.valider)
+        self.wavelength_button = tk.Button(self.actions_frame, text="Valider", command=self.valider, bg="#95a5a6", fg="white", **button_cfg)
         self.wavelength_button.grid(row=0, column=9, pady=15, padx=5, sticky="w")
         #self.device.bind_properties("wavelength", self.wavelength_entry, "value_variable")
         
         size = 15
         #self.bigb_font = tk tkFont.Font(family='Helvetica', size=size, weight='bold')
         #self.big_font = tkFont.Font(family='Helvetica', size=size)
-        self.measurement_label = tk.Label(self.power_frame, text="--- mW") #, font=self.big_font)
-        self.measurement_label.grid(row=2, column=0, pady=15, padx=5)
+        #self.measurement_label = tk.Label(self.power_frame, text="--- mW") #, font=self.big_font)
+        #self.measurement_label.grid(row=2, column=0, pady=15, padx=5)
 
         self.position_label = tk.Label(self.pos_frame, text="---")
         self.position_label.grid(row=2, column=0, pady=15, padx=5, sticky='nsew')
@@ -639,10 +667,12 @@ class PowerMeterDevice(Bindable):
 
     def get_temperature_from_device(self):
         # Utilise les valeurs de tension pour l'instant et non de température !
-
-        self.supertest.Power_thermistor()
-        self.z = self.supertest.fitting()
-
+        try:
+            self.supertest.Power_thermistor()
+            self.z = self.supertest.fitting()
+        except DaqError as e:
+            print("DAQ error occurred:", e)
+            return None
 
         #self.temperatu
         # self.temperature permet d'avoir la température de toutes les termistance (avant implantation aquisition)
