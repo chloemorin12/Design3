@@ -692,7 +692,7 @@ class PowerMeterDevice(Bindable):
         data = data.T 
         data = data[-1]
         
-        self.save_voltage_to_csv(voltage, data, self.supertest.liste_ref)  # Save voltage values to CSV
+        self.save_voltage_to_csv(voltage, data, self.supertest.liste_ref, self.supertest.liste_tension_ref)  # Save voltage values to CSV
         
         self.power = puissance_calcul(self.supertest.data , self.supertest.liste_ref)
         #print(self.wavelength)
@@ -713,13 +713,14 @@ class PowerMeterDevice(Bindable):
     
     
     # à valider Pour les tests préliminaires seulement
-    def save_voltage_to_csv(self, voltage, temperature, ref):
+    def save_voltage_to_csv(self, voltage, temperature, ref, tension_ref):
         output_file = "voltage_temperature_data.csv"  # Specify the CSV file name
 
             # Ensure all inputs are lists
         voltage = list(voltage)
         temperature = list(temperature)
         ref = list(ref)
+        tension_ref = list(tension_ref)
         #print(ref)
 
         #print(len(voltage), len(temperature), len(ref))
@@ -733,12 +734,13 @@ class PowerMeterDevice(Bindable):
                 header = (
                     [f"Voltage_{i+1}" for i in range(len(voltage))] +
                     [f"Temperature_{i+1}" for i in range(len(temperature))] +
-                    [f"Ref_{i+1}" for i in range(len(ref))]
+                    [f"Ref_{i+1}" for i in range(len(ref))] +
+                    [f"Ref_{i+1}" for i in range(len(tension_ref))]
                 )
                 writer.writerow(header)
 
             # Append the voltage, temperature, and reference values as a new row
-            row = voltage + temperature + ref  # Combine voltage, temperature, and reference into a single row
+            row = voltage + temperature + ref + tension_ref # Combine voltage, temperature, and reference into a single row
             writer.writerow(row)
 
         #print(f"Voltage, temperature, and reference values saved to {output_file}")

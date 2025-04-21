@@ -25,7 +25,6 @@ class Acquisition:
         self.daq_device = self.get_active_device()
 
 
-        self.liste_ref =[]
         self.liste_tension = []
 
         self.wavelenght_tension = np.full((256, 1), np.nan)
@@ -84,6 +83,7 @@ class Acquisition:
         start_time = time.perf_counter()
         self.liste_voltage = []
         self.liste_ref = []
+        self.liste_tension_ref = []
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
             do_task.do_channels.add_do_chan(f"{self.daq_device}/port0/line0:7") 
             ai_task.ai_channels.add_ai_voltage_chan(f"{self.daq_device}/ai7")
@@ -107,7 +107,7 @@ class Acquisition:
                     elapsed_time = stop_time - start_time
                     print(f"Elapsed time: {elapsed_time:.2f} seconds")
                     
-                    return self.data, self.liste_ref, self.liste_voltage
+                    return self.data, self.liste_ref, self.liste_voltage, self.liste_tension_ref
                 if value <= 7:
                     self.voltage_data[i] = np.nan 
                     continue
@@ -121,7 +121,8 @@ class Acquisition:
                     coeffs = np.polyfit(voltages, temperatures, deg=1)
                     poly_func = np.poly1d(coeffs)
                     temp = poly_func(voltage)
-                    self.liste_voltage.append(voltage)
+                    self.liste_tension_ref.append(voltage)
+                    #self.liste_tension_ref.append(voltage)
                     #A, B, C = self.params
                     #temperature = steinhart_hart(voltage, A, B, C)
                     #temperature = steinhart_hart_resistance_to_temperature(resistance, [0.00088692, 0.00025122, 0.00000019716])
