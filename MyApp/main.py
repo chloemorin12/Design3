@@ -2,7 +2,7 @@ from tkinter import Tk
 from tkinter import ttk
 from Application import *
 
-
+'''
 import importlib
 import subprocess
 import sys
@@ -22,7 +22,7 @@ def check_and_install_modules(modules):
 
 # Vérification et installation
 check_and_install_modules(modules_required)
-
+'''
 
 if __name__ == "__main__":
     app = PowerMeterApp()

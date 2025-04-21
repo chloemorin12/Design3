@@ -691,7 +691,6 @@ class PowerMeterDevice(Bindable):
         data = self.supertest.data[~np.isnan(self.supertest.data).any(axis=1)]
         data = data.T 
         data = data[-1]
-        print(data)
         
         self.save_voltage_to_csv(voltage, data, self.supertest.liste_ref)  # Save voltage values to CSV
         
@@ -712,7 +711,7 @@ class PowerMeterDevice(Bindable):
         return self.power
     
     
-    '''
+    
     # à valider Pour les tests préliminaires seulement
     def save_voltage_to_csv(self, voltage, temperature, ref):
         output_file = "voltage_temperature_data.csv"  # Specify the CSV file name
@@ -721,8 +720,9 @@ class PowerMeterDevice(Bindable):
         voltage = list(voltage)
         temperature = list(temperature)
         ref = list(ref)
+        #print(ref)
 
-        print(len(voltage), len(temperature), len(ref))
+        #print(len(voltage), len(temperature), len(ref))
 
         # Open the file in append mode
         with open(output_file, mode="a", newline="") as file:
@@ -741,8 +741,8 @@ class PowerMeterDevice(Bindable):
             row = voltage + temperature + ref  # Combine voltage, temperature, and reference into a single row
             writer.writerow(row)
 
-        print(f"Voltage, temperature, and reference values saved to {output_file}")
-        '''
+        #print(f"Voltage, temperature, and reference values saved to {output_file}")
+        
 
     def get_firmware_from_device(self):
         self.dev = self.supertest.daq_device
