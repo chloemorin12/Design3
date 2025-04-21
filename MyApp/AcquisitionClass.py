@@ -105,7 +105,7 @@ class Acquisition:
                     time.sleep(0.001)
                 if value == 64 or value == 80 or value == 96:    
                     self.liste_ref.append(self.voltage_data[i])
-                    print(self.liste_ref)
+                    #print(self.liste_ref)
 
 
     def Curve_temp_voltage(self):

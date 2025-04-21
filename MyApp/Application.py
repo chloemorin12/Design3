@@ -232,6 +232,7 @@ class PowerMeterApp(App):
         self.ax_puissance.tick_params(colors="#2c3e50")
         self.ax_puissance.spines['top'].set_visible(False)
         self.ax_puissance.spines['right'].set_visible(False)
+        self.ax_puissance.set_ylabel("Puissance [W]") # à revoir
 
         self.canvas = FigureCanvasTkAgg(self.plot_puissance, master=self.power_frame)
         self.canvas_widget = self.canvas.get_tk_widget()
@@ -493,9 +494,14 @@ class PowerMeterApp(App):
         # with plt.style.context(self.style):
         #self.first_axis.plot(self.x, self.y, "k-")
         self.ax_puissance.cla()  # Clears the axes
-        self.ax_puissance.plot(range(len(self.historique_temps_mesure)), self.historique_puissance)  # modifier axe des x ?
+        #self.ax_puissance.plot(range(len(self.historique_temps_mesure)), self.historique_puissance)  # modifier axe des x ?
+        if len(self.historique_puissance) > 20:
+            self.ax_puissance.plot(range(len(self.historique_temps_mesure[-20:])), self.historique_puissance[-20:])  # modifier axe des x ?
+        else:
+            self.ax_puissance.plot(range(len(self.historique_temps_mesure)), self.historique_puissance)  # modifier axe des x ?
         self.canvas.draw()
         self.canvas.flush_events()
+        self.ax_puissance.set_ylabel("Puissance [W]")
 
         #Changes
         if hasattr(self, 'colorbar') and self.colorbar:
@@ -556,20 +562,19 @@ class PowerMeterApp(App):
         #self.plot_position.append(last_pos[0], last_pos[1])
         #self.plot_position.update_plot()
         
-        
     def click_save(self):
 
         filepath = filedialog.asksaveasfilename(
             parent=self.root,
             title="Choisissez un nom de fichier:",
-            filetypes=[('Data file','.dat'),('CSV file','.csv')],
+            filetypes=[('CSV file','.csv'), ('Data file','.dat')],
         )
         
         if filepath != "":
             with open(filepath, 'w') as file:
-                file.write('Temps' + '' +  'Puissance' + '' + 'Position_X' + '' + 'Position_Y' + '' +  '\n')
+                file.write('Temps' + '' +  'Puissance' + '' + 'Position_X' + '' + 'Position_Y' + '' +  'longueur_onde' + ''+ '\n')
                 for i in range(len(self.historique_puissance)):
-                    file.write((str(self.historique_temps_mesure[i]) + ' ' + str(self.historique_puissance[i])) + ' ' + str(self.historique_position_x[i]) +  str(self.historique_position_y[i])  + '\n')
+                    file.write((str(self.historique_temps_mesure[i]) + ' ' + str(self.historique_puissance[i])) + ' ' + str(self.historique_position_x[i]) +  ' ' +str(self.historique_position_y[i]) +' '+ str(self.device.wavelength) +' '+ '\n')
             
             pass # Do something with x,
 
@@ -580,6 +585,11 @@ class PowerMeterApp(App):
             with open(filepath_action, 'w') as file:
                 for i in range(len(self.Évènements)):
                     file.write(self.Évènements[i] + '\n')
+
+
+        messagebox.showinfo("Enregistrement", "Les données ont été enregistrées avec succès !")
+        #self.click_clear() EST-ce qu'on veut clear ca ?
+
 
     def on_close(self):
         '''
@@ -672,7 +682,7 @@ class PowerMeterDevice(Bindable):
     def get_power_from_device(self):
         self.supertest.Power_thermistor()
         self.power = puissance_calcul(self.supertest.data , self.supertest.liste_ref)
-        print(self.wavelength)
+        #print(self.wavelength)
         self.power = corr_spectrale(self.power, self.wavelength)    # Avec corection spectrale Problème communication longeuru d'onde avec l'autre class
 
 
