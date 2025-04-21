@@ -84,6 +84,10 @@ class Acquisition:
         self.liste_voltage = []
         self.liste_ref = []
         self.liste_tension_ref = []
+        voltages = np.array([9.51, 9.25, 8.55, 7.9, 7.6, 7.2, 6.65 , 5.5, 5.1, 1.9])
+        temperatures = np.array([90, 85, 80, 75, 70, 65, 60 ,55, 50, 22])
+        coeffs = np.polyfit(voltages, temperatures, deg=1)
+        poly_func = np.poly1d(coeffs)
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
             do_task.do_channels.add_do_chan(f"{self.daq_device}/port0/line0:7") 
             ai_task.ai_channels.add_ai_voltage_chan(f"{self.daq_device}/ai7")
@@ -107,7 +111,8 @@ class Acquisition:
                     #print(max_value)
                     stop_time = time.perf_counter()
                     elapsed_time = stop_time - start_time
-                    print(f"Elapsed time: {elapsed_time:.2f} seconds")                    
+                    print(f"Elapsed time: {elapsed_time:.2f} seconds")  
+                    print('allo oli', np.nanmean(self.liste_voltage))                  
                     return self.data, self.liste_ref, self.liste_voltage, self.liste_tension_ref
                 if value <= 7:
                     self.voltage_data[i] = np.nan 
@@ -116,11 +121,6 @@ class Acquisition:
                     do_task.write(value, auto_start=True)
                     voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
                     voltage = np.mean(voltage_therm_i)
-                    
-                    voltages = np.array([9.51, 9.25, 8.55, 7.9, 7.6, 7.2, 6.65 , 5.5, 5.1, 1.9])
-                    temperatures = np.array([90, 85, 80, 75, 70, 65, 60 ,55, 50, 22])
-                    coeffs = np.polyfit(voltages, temperatures, deg=1)
-                    poly_func = np.poly1d(coeffs)
                     temp = poly_func(voltage)
                     self.liste_tension_ref.append(voltage)
                     #self.liste_tension_ref.append(voltage)
