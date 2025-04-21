@@ -6,6 +6,8 @@ import numpy as np
 from nidaqmx.constants import AcquisitionType
 from scipy.optimize import curve_fit
 from Algorithm import steinhart_hart_resistance_to_temperature
+import nidaqmx
+from nidaqmx.system import System
 
 
 def gaussian_2d(coords, A, x0, y0, sigma_x, sigma_y, offset):
@@ -20,12 +22,27 @@ class Acquisition:
         self.sample_rate = 10000
         self.samples_to_read = int(duration * self.sample_rate)
         self.previous_params = None  # Store the last successful parameters
+        self.daq_device = self.get_active_device()
 
 
         self.liste_ref =[]
         self.liste_tension = []
 
         self.wavelenght_tension = np.full((256, 1), np.nan)
+    
+    def get_active_device(self):
+        system = System.local()
+        device_names = [device.name for device in system.devices]
+        #print(device_names)
+
+        if not device_names:
+            raise RuntimeError("No NI-DAQmx devices detected.")
+        
+        
+        #Choisi le premier device
+        active_device = device_names[0]
+        print(f"Using device: {active_device}")
+        return active_device
         
     def assign_thermistor_positions(self):
         self.data = np.full((256, 2), np.nan)
@@ -63,8 +80,8 @@ class Acquisition:
     def Power_thermistor(self):
         start_time = time.perf_counter()
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
-            do_task.do_channels.add_do_chan("Dev1/port0/line0:7")
-            ai_task.ai_channels.add_ai_voltage_chan("Dev1/ai7")
+            do_task.do_channels.add_do_chan(f"{self.daq_device}/port0/line0:7") 
+            ai_task.ai_channels.add_ai_voltage_chan(f"{self.daq_device}/ai7")
             ai_task.timing.cfg_samp_clk_timing(
                 rate=self.sample_rate,
                 sample_mode=AcquisitionType.FINITE,
@@ -120,8 +137,8 @@ class Acquisition:
                 
     def Wavelength_thermistor(self):
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
-            do_task.do_channels.add_do_chan("Dev1/port0/line0:7")
-            ai_task.ai_channels.add_ai_voltage_chan("Dev1/ai7")
+            do_task.do_channels.add_do_chan(f"{self.daq_device}/port0/line0:7")
+            ai_task.ai_channels.add_ai_voltage_chan(f"{self.daq_device}/ai7")
             ai_task.timing.cfg_samp_clk_timing(
                 rate=self.sample_rate,
                 sample_mode=AcquisitionType.FINITE,

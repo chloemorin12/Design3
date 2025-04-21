@@ -367,10 +367,12 @@ class PowerMeterApp(App):
         #self.bind_properties("is_refreshing", self.wavelength_entry.entry, "is_disabled")
         
         #self.update_loop() # We update once at least
+    
     def angle_to_pulse_width_ms(self, angle_rad):
             return 1.5 + (angle_rad / np.pi) * 0.5
+    
 
-    def send_software_pwm(self, angle_rad=0.0, duration=0.5, channel="Dev1/port1/line0"):
+    def send_software_pwm(self, channel, angle_rad=0.0, duration=0.5):
         pulse_width_ms = self.angle_to_pulse_width_ms(angle_rad)
         period_ms = 20
         high_time = pulse_width_ms / 1000
@@ -392,10 +394,11 @@ class PowerMeterApp(App):
     
         if tab_text == "Longueur d'onde":
             print("Longueur d'onde sélectionnée → Servo vers 180°")
-            self.send_software_pwm(angle_rad=np.pi)  # ≈ 180°
+            self.send_software_pwm(angle_rad=np.pi, channel=f"{self.device.get_firmware_from_device()}/port1/line0")  # ≈ 180°
         elif tab_text == "Puissance":
             print("Puissance sélectionnée → Servo vers 0°")
-            self.send_software_pwm(angle_rad=0)  # Retour à 0°
+            self.send_software_pwm(angle_rad=0, channel=f"{self.device.get_firmware_from_device()}/port1/line0")  # Retour à 0°
+    
 
     def get_time(self):
         return(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
@@ -667,9 +670,10 @@ class PowerMeterDevice(Bindable):
         """
         self.power = 404
         self.wavelength = 1064 
-        self.firmware = None
+        #self.firmware = None
         self.temperature = []
         self.z = None 
+        self.dev = None 
 
 
     # Fonction pour obtenir la dernière valeur de voltage de la thermistance
@@ -698,12 +702,10 @@ class PowerMeterDevice(Bindable):
         return self.power
 
     def get_firmware_from_device(self):
-        if self.debug:
-            self.firmware = "1.0.0alpha1"
-        else:
-            pass # Update via USB
+        self.dev = self.supertest.daq_device
+        print(self.dev)
 
-        return self.firmware
+        return self.dev
 
     def get_temperature_from_device(self):
         # Utilise les valeurs de tension pour l'instant et non de température !
@@ -738,7 +740,7 @@ class PowerMeterDevice(Bindable):
     def update_from_device(self):
         d = time.time()
         self.get_power_from_device()
-        #self.get_firmware_from_device()
+        self.get_firmware_from_device()
         self.get_temperature_from_device()
         #self.get_wavelength_from_device()
         f = time.time()
