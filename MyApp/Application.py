@@ -20,6 +20,7 @@ from Algorithm_wavelength import trouver_longueurs_donde, longueur_donde_commune
 import numpy as np
 import nidaqmx
 from nidaqmx.errors import DaqError
+import csv
 
 
 class PowerMeterApp(App):
@@ -674,6 +675,7 @@ class PowerMeterDevice(Bindable):
         self.temperature = []
         self.z = None 
         self.dev = None 
+        
 
 
     # Fonction pour obtenir la dernière valeur de voltage de la thermistance
@@ -685,6 +687,14 @@ class PowerMeterDevice(Bindable):
 
     def get_power_from_device(self):
         self.supertest.Power_thermistor()
+        voltage = self.supertest.liste_voltage
+        data = self.supertest.data[~np.isnan(self.supertest.data).any(axis=1)]
+        data = data.T 
+        data = data[-1]
+        print(data)
+        
+        self.save_voltage_to_csv(voltage, data, self.supertest.liste_ref)  # Save voltage values to CSV
+        
         self.power = puissance_calcul(self.supertest.data , self.supertest.liste_ref)
         #print(self.wavelength)
         self.power = corr_spectrale(self.power, self.wavelength)    # Avec corection spectrale Problème communication longeuru d'onde avec l'autre class
@@ -700,6 +710,39 @@ class PowerMeterDevice(Bindable):
             pass # Update via USB
         '''
         return self.power
+    
+    
+    '''
+    # à valider Pour les tests préliminaires seulement
+    def save_voltage_to_csv(self, voltage, temperature, ref):
+        output_file = "voltage_temperature_data.csv"  # Specify the CSV file name
+
+            # Ensure all inputs are lists
+        voltage = list(voltage)
+        temperature = list(temperature)
+        ref = list(ref)
+
+        print(len(voltage), len(temperature), len(ref))
+
+        # Open the file in append mode
+        with open(output_file, mode="a", newline="") as file:
+            writer = csv.writer(file)
+
+            # Write the header if the file is empty
+            if file.tell() == 0:  # Check if the file is empty
+                header = (
+                    [f"Voltage_{i+1}" for i in range(len(voltage))] +
+                    [f"Temperature_{i+1}" for i in range(len(temperature))] +
+                    [f"Ref_{i+1}" for i in range(len(ref))]
+                )
+                writer.writerow(header)
+
+            # Append the voltage, temperature, and reference values as a new row
+            row = voltage + temperature + ref  # Combine voltage, temperature, and reference into a single row
+            writer.writerow(row)
+
+        print(f"Voltage, temperature, and reference values saved to {output_file}")
+        '''
 
     def get_firmware_from_device(self):
         self.dev = self.supertest.daq_device

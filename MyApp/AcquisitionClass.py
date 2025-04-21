@@ -79,6 +79,7 @@ class Acquisition:
     
     def Power_thermistor(self):
         start_time = time.perf_counter()
+        self.liste_voltage = []
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
             do_task.do_channels.add_do_chan(f"{self.daq_device}/port0/line0:7") 
             ai_task.ai_channels.add_ai_voltage_chan(f"{self.daq_device}/ai7")
@@ -102,26 +103,42 @@ class Acquisition:
                     elapsed_time = stop_time - start_time
                     print(f"Elapsed time: {elapsed_time:.2f} seconds")
                     
-                    return self.data, self.liste_ref
+                    return self.data, self.liste_ref, self.liste_voltage
                 if value <= 7:
                     self.voltage_data[i] = np.nan 
                     continue
-                else:
+                if value == 64 or value == 80 or value == 96:   
                     do_task.write(value, auto_start=True)
                     voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
                     voltage = np.mean(voltage_therm_i)
+                    
                     voltages = np.array([9.51, 9.25, 8.55, 7.9, 7.6, 7.2, 6.65 , 5.5, 5.1, 1.9])
                     temperatures = np.array([90, 85, 80, 75, 70, 65, 60 ,55, 50, 22])
                     coeffs = np.polyfit(voltages, temperatures, deg=1)
                     poly_func = np.poly1d(coeffs)
                     temp = poly_func(voltage)
+                    self.liste_voltage.append(voltage)
+                    #A, B, C = self.params
+                    #temperature = steinhart_hart(voltage, A, B, C)
+                    #temperature = steinhart_hart_resistance_to_temperature(resistance, [0.00088692, 0.00025122, 0.00000019716])
+                    self.liste_ref.append(temp)
+                else:
+                    do_task.write(value, auto_start=True)
+                    voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
+                    voltage = np.mean(voltage_therm_i)
+                    
+                    voltages = np.array([9.51, 9.25, 8.55, 7.9, 7.6, 7.2, 6.65 , 5.5, 5.1, 1.9])
+                    temperatures = np.array([90, 85, 80, 75, 70, 65, 60 ,55, 50, 22])
+                    coeffs = np.polyfit(voltages, temperatures, deg=1)
+                    poly_func = np.poly1d(coeffs)
+                    temp = poly_func(voltage)
+                    self.liste_voltage.append(voltage)
                     #A, B, C = self.params
                     #temperature = steinhart_hart(voltage, A, B, C)
                     #temperature = steinhart_hart_resistance_to_temperature(resistance, [0.00088692, 0.00025122, 0.00000019716])
                     self.voltage_data[i] = temp
                     time.sleep(0.001)
-                if value == 64 or value == 80 or value == 96:    
-                    self.liste_ref.append(self.voltage_data[i])
+
                     #print(self.liste_ref)
 
 

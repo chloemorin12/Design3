@@ -32,6 +32,8 @@ def inverse_transfer_function( Gain, w_n, z):
     T2 = 1/w_n**2
     G = Gain
 
+    print(T1, T2, G)
+
     Coef1 = (1 + T1/0.15 + T2/(0.15**2))/ G
     Coef2 = (T1/0.15 - 2*T2/(0.15**2))/G
     Coef3 = (T2/(0.15**2 * G))
