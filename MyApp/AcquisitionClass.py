@@ -133,11 +133,6 @@ class Acquisition:
                     do_task.write(value, auto_start=True)
                     voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
                     voltage = np.mean(voltage_therm_i)
-                    
-                    voltages = np.array([9.51, 9.25, 8.55, 7.9, 7.6, 7.2, 6.65 , 5.5, 5.1, 1.9])
-                    temperatures = np.array([90, 85, 80, 75, 70, 65, 60 ,55, 50, 22])
-                    coeffs = np.polyfit(voltages, temperatures, deg=1)
-                    poly_func = np.poly1d(coeffs)
                     temp = poly_func(voltage)
                     self.liste_voltage.append(voltage)
                     #A, B, C = self.params
