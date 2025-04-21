@@ -32,6 +32,8 @@ def inverse_transfer_function( Gain, w_n, z):
     T2 = 1/w_n**2
     G = Gain
 
+    print(T1, T2, G)
+
     Coef1 = (1 + T1/0.15 + T2/(0.15**2))/ G
     Coef2 = (T1/0.15 - 2*T2/(0.15**2))/G
     Coef3 = (T2/(0.15**2 * G))
@@ -83,8 +85,6 @@ def puissance_calcul( data, ref):
         inital_data_t_2 = data[-3]
         inital_data_t_2 = inital_data_t_2 - ref
 
-         
-
     data = np.array(data[-1]) - ref
 
     
@@ -106,9 +106,9 @@ def puissance_calcul( data, ref):
         #P_t = E/k + (tau/k)*dE
 
             # 2e ordre
-    T_k = np.mean(data)
-    T_k_1 = np.mean(inital_data_t_1)
-    T_k_2 = np.mean(inital_data_t_2)
+    T_k = np.max(data)
+    T_k_1 = np.max(inital_data_t_1)
+    T_k_2 = np.max(inital_data_t_2)
         # Fctn_de_transfert 2e ordre
     P_t = c_0*T_k + c_1*T_k_1 + c_2*T_k_2
     print(P_t)

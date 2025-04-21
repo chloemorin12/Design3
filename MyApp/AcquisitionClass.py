@@ -6,6 +6,8 @@ import numpy as np
 from nidaqmx.constants import AcquisitionType
 from scipy.optimize import curve_fit
 from Algorithm import steinhart_hart_resistance_to_temperature
+import nidaqmx
+from nidaqmx.system import System
 
 
 def gaussian_2d(coords, A, x0, y0, sigma_x, sigma_y, offset):
@@ -20,12 +22,26 @@ class Acquisition:
         self.sample_rate = 10000
         self.samples_to_read = int(duration * self.sample_rate)
         self.previous_params = None  # Store the last successful parameters
+        self.daq_device = self.get_active_device()
 
 
-        self.liste_ref =[]
         self.liste_tension = []
 
         self.wavelenght_tension = np.full((256, 1), np.nan)
+    
+    def get_active_device(self):
+        system = System.local()
+        device_names = [device.name for device in system.devices]
+        #print(device_names)
+
+        if not device_names:
+            raise RuntimeError("No NI-DAQmx devices detected.")
+        
+        
+        #Choisi le premier device
+        active_device = device_names[0]
+        print(f"Using device: {active_device}")
+        return active_device
         
     def assign_thermistor_positions(self):
         self.data = np.full((256, 2), np.nan)
@@ -62,15 +78,15 @@ class Acquisition:
         return self.data
     
     
+
     def Power_thermistor(self):
         start_time = time.perf_counter()
-        voltages = np.array([9.51, 9.25, 8.55, 7.9, 7.6, 7.2, 6.65 , 5.5, 5.1, 1.9])
-        temperatures = np.array([90, 85, 80, 75, 70, 65, 60 ,55, 50, 22])
-        coeffs = np.polyfit(voltages, temperatures, deg=1)
-        poly_func = np.poly1d(coeffs)
+        self.liste_voltage = []
+        self.liste_ref = []
+        self.liste_tension_ref = []
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
-            do_task.do_channels.add_do_chan("Dev1/port0/line0:7")
-            ai_task.ai_channels.add_ai_voltage_chan("Dev1/ai7")
+            do_task.do_channels.add_do_chan(f"{self.daq_device}/port0/line0:7") 
+            ai_task.ai_channels.add_ai_voltage_chan(f"{self.daq_device}/ai7")
             ai_task.timing.cfg_samp_clk_timing(
                 rate=self.sample_rate,
                 sample_mode=AcquisitionType.FINITE,
@@ -88,29 +104,49 @@ class Acquisition:
                     self.data = np.hstack((self.data, self.voltage_data))
 
                     max_value = np.nanmax(list(np.nanmax(float(row[-1]) for row in self.data)))
-                    print(max_value)
+                    #print(max_value)
                     stop_time = time.perf_counter()
                     elapsed_time = stop_time - start_time
-                    print(f"Elapsed time: {elapsed_time:.2f} seconds")
-                    return self.data, self.liste_ref
-                
+                    print(f"Elapsed time: {elapsed_time:.2f} seconds")                    
+                    return self.data, self.liste_ref, self.liste_voltage, self.liste_tension_ref
                 if value <= 7:
                     self.voltage_data[i] = np.nan 
                     continue
-                if value == 64 or value == 80 or value == 96:    
+                if value == 64 or value == 80 or value == 96:   
                     do_task.write(value, auto_start=True)
                     voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
-                    self.liste_ref.append(np.mean(voltage_therm_i))
+                    voltage = np.mean(voltage_therm_i)
+                    
+                    voltages = np.array([9.51, 9.25, 8.55, 7.9, 7.6, 7.2, 6.65 , 5.5, 5.1, 1.9])
+                    temperatures = np.array([90, 85, 80, 75, 70, 65, 60 ,55, 50, 22])
+                    coeffs = np.polyfit(voltages, temperatures, deg=1)
+                    poly_func = np.poly1d(coeffs)
+                    temp = poly_func(voltage)
+                    self.liste_tension_ref.append(voltage)
+                    #self.liste_tension_ref.append(voltage)
+                    #A, B, C = self.params
+                    #temperature = steinhart_hart(voltage, A, B, C)
+                    #temperature = steinhart_hart_resistance_to_temperature(resistance, [0.00088692, 0.00025122, 0.00000019716])
+                    self.liste_ref.append(temp)
+                    #print('liste_ref dans acquisition',self.liste_ref)
                 else:
                     do_task.write(value, auto_start=True)
                     voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
                     voltage = np.mean(voltage_therm_i)
+                    
+                    voltages = np.array([9.51, 9.25, 8.55, 7.9, 7.6, 7.2, 6.65 , 5.5, 5.1, 1.9])
+                    temperatures = np.array([90, 85, 80, 75, 70, 65, 60 ,55, 50, 22])
+                    coeffs = np.polyfit(voltages, temperatures, deg=1)
+                    poly_func = np.poly1d(coeffs)
                     temp = poly_func(voltage)
+                    self.liste_voltage.append(voltage)
                     #A, B, C = self.params
                     #temperature = steinhart_hart(voltage, A, B, C)
                     #temperature = steinhart_hart_resistance_to_temperature(resistance, [0.00088692, 0.00025122, 0.00000019716])
                     self.voltage_data[i] = temp
                     time.sleep(0.001)
+
+                    #print(self.liste_ref)
 
 
     def Curve_temp_voltage(self):
@@ -125,8 +161,8 @@ class Acquisition:
                 
     def Wavelength_thermistor(self):
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
-            do_task.do_channels.add_do_chan("Dev1/port0/line0:7")
-            ai_task.ai_channels.add_ai_voltage_chan("Dev1/ai7")
+            do_task.do_channels.add_do_chan(f"{self.daq_device}/port0/line0:7")
+            ai_task.ai_channels.add_ai_voltage_chan(f"{self.daq_device}/ai7")
             ai_task.timing.cfg_samp_clk_timing(
                 rate=self.sample_rate,
                 sample_mode=AcquisitionType.FINITE,

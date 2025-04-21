@@ -7,7 +7,7 @@ import matplotlib, sys
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from datetime import datetime
-from tkinter.messagebox import askyesno
+from tkinter.messagebox import askyesnocancel
 import tkinter as tk
 from tkinter import ttk
 from app import App
@@ -16,10 +16,11 @@ from base import Base
 from AcquisitionClass import Acquisition 
 import threading
 import time
-from Algorithm_wavelength import trouver_longueurs_donde, longueur_donde_commune, plot_graph, adjust_value, wavelength_calculator
+from Algorithm_wavelength import trouver_longueurs_donde, longueur_donde_commune, plot_graph, adjust_value, wavelength_calculator, corr_spectrale
 import numpy as np
 import nidaqmx
 from nidaqmx.errors import DaqError
+import csv
 
 
 class PowerMeterApp(App):
@@ -36,6 +37,8 @@ class PowerMeterApp(App):
         self.historique_temps_mesure = []
         self.historique_position_x = []
         self.historique_position_y = []
+        self.wl = self.device.wavelength
+        self.T_ref_colorbar = 0 # à changer valeur minimal afficher color bar
 
         
         self.root.title("Puissance-mètre")
@@ -137,6 +140,16 @@ class PowerMeterApp(App):
             final_result, incertainty, wl_individuelles = wavelength_calculator(Powers, ytols, canvas_frame, result_value_label)
             graphe = plot_graph(wl_individuelles[0], wl_individuelles[1], wl_individuelles[2], final_result, incertainty, canvas_frame)
             messagebox.showinfo("Info", "La mesure de longueur d'onde est finie")
+
+            
+            self.wavelength_entry.config(state='normal')  # Clear the entry field before inserting new text
+            self.wavelength_entry.delete(0, tk.END)  # Clear the entry field before inserting new text
+            self.wavelength_entry.insert(0, str(final_result))  # donne la longueur d'onde mesurée par le puissance-mètre
+            self.wl = final_result
+            self.device.wavelength = final_result # ?
+            self.wavelength_entry.config(state='disabled')  # Clear the entry field before inserting new text
+
+
             return final_result, incertainty, graphe, ytols
     
 
@@ -199,11 +212,16 @@ class PowerMeterApp(App):
                                      bg="#95a5a6", fg="white", **button_cfg)
         self.save_button.grid(row=0, column=5, padx=10, pady=10)
 
+        self.status_light = tk.Canvas(self.actions_frame, width=24, height=24, bg='white', highlightthickness=0)
+        self.light_id = self.status_light.create_oval(4, 4, 20, 20, fill="red", outline="gray")
+        self.status_light.grid(row=0, column=0, padx=10, pady=15)
+
+
         # --- Graphique de puissance ---
         self.graphs_frame = tk.Frame(self.tab_puissance, bg="#f0f4f8")
         self.graphs_frame.grid(row=1, column=0, columnspan=3, sticky="ew", padx=10, pady=5)
 
-        self.power_frame = tk.LabelFrame(self.graphs_frame, text="Puissance dans le temps",
+        self.power_frame = tk.LabelFrame(self.graphs_frame, text="Puissance en temps réel",
                                          bg="#f0f4f8", fg="#2c3e50", font=("Segoe UI", 10, "bold"), bd=1, relief="solid")
         self.power_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
 
@@ -215,6 +233,7 @@ class PowerMeterApp(App):
         self.ax_puissance.tick_params(colors="#2c3e50")
         self.ax_puissance.spines['top'].set_visible(False)
         self.ax_puissance.spines['right'].set_visible(False)
+        self.ax_puissance.set_ylabel("Puissance [W]") # à revoir
 
         self.canvas = FigureCanvasTkAgg(self.plot_puissance, master=self.power_frame)
         self.canvas_widget = self.canvas.get_tk_widget()
@@ -228,7 +247,7 @@ class PowerMeterApp(App):
 
 
         # Graphique de position
-        self.pos_frame = tk.LabelFrame(self.graphs_frame, text="Position dans le temps",
+        self.pos_frame = tk.LabelFrame(self.graphs_frame, text="Position en temps réel",
                                        bg="#f0f4f8", fg="#2c3e50", font=("Segoe UI", 10, "bold"), bd=1, relief="solid")
         self.pos_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
 
@@ -251,6 +270,8 @@ class PowerMeterApp(App):
 
             self.colorbar = self.fig.colorbar(im, ax=self.ax)
             self.colorbar.set_label("Température [°C]")
+            #self.colorbar.set_clim(vmin=self.T_ref_colorbar, vmax= np.max(values[1]))
+
 
             self.toolbar_frame_position = tk.Frame(self.pos_frame, bg="#f0f4f8")
             self.toolbar_frame_position.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
@@ -290,17 +311,18 @@ class PowerMeterApp(App):
         self.wavelength_entry_label = tk.Label(self.actions_frame, text="Longueur d'onde:", font=("Segoe UI", 10), bg="#f0f4f8", fg="#2c3e50")
         self.wavelength_entry_label.grid(row=0, column=6, pady=15, padx=5, sticky="w")
 
-        self.wavelength_entry = tk.Entry(self.actions_frame, state='disabled') #,"Entrer la longueur d'onde manuellement ou longueur d'onde mesurée:")
+        self.wavelength_entry = tk.Entry(self.actions_frame, state='normal') #,"Entrer la longueur d'onde manuellement ou longueur d'onde mesurée:")
         self.wavelength_entry.grid(row=0, column=7, pady=15, padx=5, sticky="w")
-        
+                
         self.wavelength_entry.delete(0, tk.END)  # Clear the entry field before inserting new text
-        self.wavelength_entry.insert(0, self.device.get_wavelength_from_device())  # donne la longueur d'onde mesurée par le puissance-mètre
+        self.wavelength_entry.insert(0, self.wl)  # donne la longueur d'onde mesurée par le puissance-mètre
+        self.wavelength_entry.config(state="disabled")  # Disable the entry field
 
         self.wavelength_button = tk.Button(self.actions_frame, text="Entrer une longueur d'onde manuellement", command=self.enregistre_longueur_donde_manuel, bg="#95a5a6", fg="white", **button_cfg)
         self.wavelength_button.grid(row=0, column=8, pady=15, padx=5, sticky="w")
 
-        self.wavelength_button = tk.Button(self.actions_frame, text="Valider", command=self.valider, bg="#95a5a6", fg="white", **button_cfg)
-        self.wavelength_button.grid(row=0, column=9, pady=15, padx=5, sticky="w")
+        self.wavelength_button_1 = tk.Button(self.actions_frame, text="Valider", command=self.valider, bg="#95a5a6", fg="white", **button_cfg)
+        self.wavelength_button_1.grid(row=0, column=9, pady=15, padx=5, sticky="w")
         #self.device.bind_properties("wavelength", self.wavelength_entry, "value_variable")
         
         size = 15
@@ -346,10 +368,12 @@ class PowerMeterApp(App):
         #self.bind_properties("is_refreshing", self.wavelength_entry.entry, "is_disabled")
         
         #self.update_loop() # We update once at least
+    
     def angle_to_pulse_width_ms(self, angle_rad):
             return 1.5 + (angle_rad / np.pi) * 0.5
+    
 
-    def send_software_pwm(self, angle_rad=0.0, duration=0.5, channel="Dev1/port1/line0"):
+    def send_software_pwm(self, channel, angle_rad=0.0, duration=0.5):
         pulse_width_ms = self.angle_to_pulse_width_ms(angle_rad)
         period_ms = 20
         high_time = pulse_width_ms / 1000
@@ -371,10 +395,11 @@ class PowerMeterApp(App):
     
         if tab_text == "Longueur d'onde":
             print("Longueur d'onde sélectionnée → Servo vers 180°")
-            self.send_software_pwm(angle_rad=np.pi)  # ≈ 180°
+            self.send_software_pwm(angle_rad=np.pi, channel=f"{self.device.get_firmware_from_device()}/port1/line0")  # ≈ 180°
         elif tab_text == "Puissance":
             print("Puissance sélectionnée → Servo vers 0°")
-            self.send_software_pwm(angle_rad=0)  # Retour à 0°
+            self.send_software_pwm(angle_rad=0, channel=f"{self.device.get_firmware_from_device()}/port1/line0")  # Retour à 0°
+    
 
     def get_time(self):
         return(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
@@ -383,6 +408,7 @@ class PowerMeterApp(App):
 
         if not self.is_refreshing:
             self.is_refreshing = True
+            self.status_light.itemconfig(self.light_id, fill="green")
             self.update_loop()
             self.start_button.config(text="Arrêter")
             # Historique communication
@@ -395,9 +421,17 @@ class PowerMeterApp(App):
                                           + '\n' + self.Évènements[len(self.Évènements)-5]) 
             #self.update_thread = threading.Thread(target=self.device.update_from_device, daemon=True)
             #self.update_thread.start()
-            
+            self.save_button.config(state='disabled')
+            self.misea0.config(state='disabled')
+            self.paramètre.config(state='disabled') 
+            self.wavelength_entry.config(state='disabled')
+            self.wavelength_button.config(state='disabled')
+            self.connexion.config(state='disabled')
+            self.wavelength_entry_label.config(state='disabled')
+            self.wavelength_button_1.config(state='disabled')            
         else:
             self.is_refreshing = False
+            self.status_light.itemconfig(self.light_id, fill="red")
             self.start_button.config(text="Démarrer")
             # Historique communication
             self.Évènements.append(self.get_time()+ ' : '+'La prise de donnée est mise en pause')
@@ -407,7 +441,14 @@ class PowerMeterApp(App):
                                           + '\n' + self.Évènements[len(self.Évènements)-3]
                                           + '\n' + self.Évènements[len(self.Évènements)-4]
                                           + '\n' + self.Évènements[len(self.Évènements)-5]) 
-            
+            self.save_button.config(state='normal')
+            self.misea0.config(state='normal')
+            self.paramètre.config(state='normal') 
+            self.wavelength_entry.config(state='normal')
+            self.wavelength_button.config(state='normal')
+            self.connexion.config(state='normal')
+            self.wavelength_entry_label.config(state='normal')
+            self.wavelength_button_1.config(state='normal')
 
     #def communication(self, étape):
     #    if étape == 'start':
@@ -458,8 +499,13 @@ class PowerMeterApp(App):
         #self.first_axis.plot(self.x, self.y, "k-")
         self.ax_puissance.cla()  # Clears the axes
         self.ax_puissance.plot(range(len(self.historique_temps_mesure)), self.historique_puissance)  # modifier axe des x ?
+        #if len(self.historique_puissance) > 20:
+        #    self.ax_puissance.plot(range(len(self.historique_temps_mesure[-20:])), self.historique_puissance[-20:])  # modifier axe des x ?
+        #else:
+        #    self.ax_puissance.plot(range(len(self.historique_temps_mesure)), self.historique_puissance)  # modifier axe des x ?
         self.canvas.draw()
         self.canvas.flush_events()
+        self.ax_puissance.set_ylabel("Puissance [W]")
 
         #Changes
         if hasattr(self, 'colorbar') and self.colorbar:
@@ -473,11 +519,13 @@ class PowerMeterApp(App):
         self.ax.set_xlabel("Position X [cm]")
         self.ax.set_ylabel("Position Y [cm]")
         #self.ax.imshow(self.device.get_temperature_from_device()[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
-        temperature_data = values[1]
-        im = self.ax.imshow(temperature_data, origin='lower', extent=(-15,15,-15,15), cmap='coolwarm')
+        
+        im = self.ax.imshow(values[1], origin='lower', extent=(-15,15,-15,15), cmap='coolwarm')
         self.ax.plot(values[2], values[3], 'kx', markersize=10, markeredgewidth=3)
         self.colorbar = self.fig.colorbar(im, ax=self.ax)
         self.colorbar.set_label("Température [°C]") 
+        #self.colorbar.set_clim(vmin=self.T_ref_colorbar, vmax=np.max(values[1]))
+
         self.pos_canvas.draw()
         self.pos_canvas.flush_events()
 
@@ -518,20 +566,19 @@ class PowerMeterApp(App):
         #self.plot_position.append(last_pos[0], last_pos[1])
         #self.plot_position.update_plot()
         
-        
     def click_save(self):
 
         filepath = filedialog.asksaveasfilename(
             parent=self.root,
             title="Choisissez un nom de fichier:",
-            filetypes=[('Data file','.dat'),('CSV file','.csv')],
+            filetypes=[('CSV file','.csv'), ('Data file','.dat')],
         )
         
         if filepath != "":
             with open(filepath, 'w') as file:
-                file.write('Temps' + '' +  'Puissance' + '' + 'Position_X' + '' + 'Position_Y' + '' +  '\n')
+                file.write('Temps' + '' +  'Puissance' + '' + 'Position_X' + '' + 'Position_Y' + '' +  'longueur_onde' + ''+ '\n')
                 for i in range(len(self.historique_puissance)):
-                    file.write((str(self.historique_temps_mesure[i]) + ' ' + str(self.historique_puissance[i])) + ' ' + str(self.historique_position_x[i]) +  str(self.historique_position_y[i])  + '\n')
+                    file.write((str(self.historique_temps_mesure[i]) + ' ' + str(self.historique_puissance[i])) + ' ' + str(self.historique_position_x[i]) +  ' ' +str(self.historique_position_y[i]) +' '+ str(self.device.wavelength) +' '+ '\n')
             
             pass # Do something with x,
 
@@ -543,13 +590,18 @@ class PowerMeterApp(App):
                 for i in range(len(self.Évènements)):
                     file.write(self.Évènements[i] + '\n')
 
+
+        messagebox.showinfo("Enregistrement", "Les données ont été enregistrées avec succès !")
+        #self.click_clear() EST-ce qu'on veut clear ca ?
+
+
     def on_close(self):
         '''
         Pour quitter l'application et offrir la sauvegrade
         '''
-        response = askyesno(
-            title="Save Data",
-            message="Do you want to save the collected data before quitting?",
+        response = askyesnocancel(
+            title="Enregistrement des données",
+            message="Voulez-vous enregistrer les données avant de quitter?",
         )
         if response is True:
             self.click_save()
@@ -563,16 +615,16 @@ class PowerMeterApp(App):
         #TO ADD
     def valider(self):
         self.wavelength_entry.config(state="disabled")
-        wavelength = self.wavelength_entry.get()
-        print(wavelength)
-        return wavelength
+        self.wl = self.wavelength_entry.get()
+        self.device.wavelength = self.wl # ?
+        return self.wl
 
         
         
     def click_clear(self):
 
         
-        click = askyesno(title="Confirmation", message="Voulez-vous enregistrer les données aquisitionnées avant de mettre à zéro les données? ")
+        click = askyesnocancel(title="Confirmation", message="Voulez-vous enregistrer les données aquisitionnées avant de mettre à zéro les données? ")
         if click is True:  # User clicked "Yes"
             self.click_save()
             self.Évènements.append(self.get_time()+ ' : '+'Sauvarde des données aquisitionnées')
@@ -619,9 +671,11 @@ class PowerMeterDevice(Bindable):
         """
         self.power = 404
         self.wavelength = 1064 
-        self.firmware = None
+        #self.firmware = None
         self.temperature = []
         self.z = None 
+        self.dev = None 
+        
 
 
     # Fonction pour obtenir la dernière valeur de voltage de la thermistance
@@ -633,7 +687,16 @@ class PowerMeterDevice(Bindable):
 
     def get_power_from_device(self):
         self.supertest.Power_thermistor()
+        voltage = self.supertest.liste_voltage
+        data = self.supertest.data[~np.isnan(self.supertest.data).any(axis=1)]
+        data = data.T 
+        data = data[-1]
+        
+        self.save_voltage_to_csv(voltage, data, self.supertest.liste_ref, self.supertest.liste_tension_ref)  # Save voltage values to CSV
+        
         self.power = puissance_calcul(self.supertest.data , self.supertest.liste_ref)
+        #print(self.wavelength)
+        self.power = corr_spectrale(self.power, self.wavelength)    # Avec corection spectrale Problème communication longeuru d'onde avec l'autre class
 
 
         '''
@@ -646,14 +709,48 @@ class PowerMeterDevice(Bindable):
             pass # Update via USB
         '''
         return self.power
+    
+    
+    
+    # à valider Pour les tests préliminaires seulement
+    def save_voltage_to_csv(self, voltage, temperature, ref, tension_ref):
+        output_file = "voltage_temperature_data.csv"  # Specify the CSV file name
+
+            # Ensure all inputs are lists
+        voltage = list(voltage)
+        temperature = list(temperature)
+        ref = list(ref)
+        tension_ref = list(tension_ref)
+        #print(ref)
+
+        #print(len(voltage), len(temperature), len(ref))
+
+        # Open the file in append mode
+        with open(output_file, mode="a", newline="") as file:
+            writer = csv.writer(file)
+
+            # Write the header if the file is empty
+            if file.tell() == 0:  # Check if the file is empty
+                header = (
+                    [f"Voltage_{i+1}" for i in range(len(voltage))] +
+                    [f"Temperature_{i+1}" for i in range(len(temperature))] +
+                    [f"Ref_{i+1}" for i in range(len(ref))] +
+                    [f"Ref_{i+1}" for i in range(len(tension_ref))]
+                )
+                writer.writerow(header)
+
+            # Append the voltage, temperature, and reference values as a new row
+            row = voltage + temperature + ref + tension_ref # Combine voltage, temperature, and reference into a single row
+            writer.writerow(row)
+
+        #print(f"Voltage, temperature, and reference values saved to {output_file}")
+        
 
     def get_firmware_from_device(self):
-        if self.debug:
-            self.firmware = "1.0.0alpha1"
-        else:
-            pass # Update via USB
+        self.dev = self.supertest.daq_device
+        print(self.dev)
 
-        return self.firmware
+        return self.dev
 
     def get_temperature_from_device(self):
         # Utilise les valeurs de tension pour l'instant et non de température !
@@ -676,20 +773,21 @@ class PowerMeterDevice(Bindable):
         #temps = timeit.timeit('Acquisition().fitting()', number=1)
         #print(temps)
         return self.z
-    
+    '''
     def get_wavelength_from_device(self):
             if self.debug:
                 self.wavelength = 0
             else:
                 pass # Update via USB
             return self.wavelength
+    '''
 
     def update_from_device(self):
         d = time.time()
         self.get_power_from_device()
-        #self.get_firmware_from_device()
+        self.get_firmware_from_device()
         self.get_temperature_from_device()
-        self.get_wavelength_from_device()
+        #self.get_wavelength_from_device()
         f = time.time()
         print(f-d)
 
