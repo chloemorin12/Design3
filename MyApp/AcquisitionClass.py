@@ -89,10 +89,6 @@ class Acquisition:
                 if value <= 7:
                     self.voltage_data[i] = np.nan 
                     continue
-                if value == 64 or value == 80 or value == 96:    
-                    do_task.write(value, auto_start=True)
-                    voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
-                    self.liste_ref.append(np.mean(voltage_therm_i))
                 else:
                     do_task.write(value, auto_start=True)
                     voltage_therm_i = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
@@ -107,6 +103,9 @@ class Acquisition:
                     #temperature = steinhart_hart_resistance_to_temperature(resistance, [0.00088692, 0.00025122, 0.00000019716])
                     self.voltage_data[i] = temp
                     time.sleep(0.001)
+                if value == 64 or value == 80 or value == 96:    
+                    self.liste_ref.append(self.voltage_data[i])
+                    print(self.liste_ref)
 
 
     def Curve_temp_voltage(self):
