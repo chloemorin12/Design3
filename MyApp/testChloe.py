@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import pandas as pd
 from matplotlib.animation import FuncAnimation
+from Algorithm import prediction_temperature
 
 def VoltageToResistance(voltage, R2, gain, R4):
     Vin = 12
@@ -58,8 +59,7 @@ def inverse_transfer_function( Gain, w_n, z):
 
 # paramètre de la fonction de transfert (2e ordre)
 
-def puissance_calcul( data, ref):
-
+def puissance_calcul(data, ref):
     inital_data_t_1 = [0]*53
     inital_data_t_2 = [0]*53
 
@@ -84,9 +84,6 @@ def puissance_calcul( data, ref):
         inital_data_t_2 = inital_data_t_2 - ref
 
     data = np.array(data[-1]) - ref
-
-    
-    puissance = []
 
     #a_0, a_1, a_2 = inverse_transfer_function(0.85, 0.13, 1)
     #b_0, b_1, b_2 = inverse_transfer_function(0.86, 0.12, 1)

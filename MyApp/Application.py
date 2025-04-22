@@ -5,6 +5,7 @@ from testChloe import data_gradient_temperature, position, puissance_calcul
 import matplotlib.pyplot as plt
 import matplotlib, sys
 matplotlib.use('TkAgg')
+
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from datetime import datetime
 from tkinter.messagebox import askyesnocancel
@@ -529,11 +530,6 @@ class PowerMeterApp(App):
 
 
 
-       
-        
-        
-        
-
 
     def update_loop(self):
         
@@ -691,7 +687,6 @@ class PowerMeterDevice(Bindable):
         data = data[-1]
         
         self.save_voltage_to_csv(voltage, data, self.supertest.liste_ref, self.supertest.liste_tension_ref)  # Save voltage values to CSV
-        
         self.power = puissance_calcul(self.supertest.data , self.supertest.liste_ref)
         #print(self.wavelength)
         self.power = corr_spectrale(self.power, self.wavelength)    # Avec corection spectrale Problème communication longeuru d'onde avec l'autre class
@@ -758,17 +753,6 @@ class PowerMeterDevice(Bindable):
             print("DAQ error occurred:", e)
             return None
 
-        #self.temperatu
-        # self.temperature permet d'avoir la température de toutes les termistance (avant implantation aquisition)
-        #self.temperature = [70,71,72,73,74,75,76,77,70] #[random.randrange(90,113,1), random.randrange(60,73,1),random.randrange(50,80,1),random.randrange(70,73,1),random.randrange(70,73,1),74,75, 76,70]  
-        #print(self.temperature)
-        #print(type(self.temperature))
-        #if self.debug:
-        #    self.temperature = [random.randrange(70,73,1), random.randrange(70,73,1),random.randrange(70,73,1),random.randrange(70,73,1),random.randrange(70,73,1),72,74, 72,70]  
-        #else:
-        #    pass # Update via USB
-        #temps = timeit.timeit('Acquisition().fitting()', number=1)
-        #print(temps)
         return self.z
     '''
     def get_wavelength_from_device(self):
