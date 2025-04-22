@@ -121,7 +121,8 @@ class PowerMeterApp(App):
         self.ST = Acquisition()
        
         def on_button_click():
-            Powers = [500, 300, 450, 320]
+            TestWL = self.ST.Wavelength_thermistor()
+            Powers = TestWL
             iterations = 0
             ytols = np.array([2.0, 2.0, 2.0])
                 
@@ -369,25 +370,22 @@ class PowerMeterApp(App):
         
         #self.update_loop() # We update once at least
     
-    def angle_to_pulse_width_ms(self, angle_rad):
-            return 1.5 + (angle_rad / np.pi) * 0.5
-    
 
-    def send_software_pwm(self, channel, angle_rad=0.0, duration=0.5):
-        pulse_width_ms = self.angle_to_pulse_width_ms(angle_rad)
-        period_ms = 20
-        high_time = pulse_width_ms / 1000
-        low_time = (period_ms - pulse_width_ms) / 1000
-
-        with nidaqmx.Task() as task:
-            task.do_channels.add_do_chan(channel)
-            start_time = time.time()
-
-            while time.time() - start_time < duration:
+    def send_software_pwm(self, channel, page):
+        if page == 'Wavelenght':
+            with nidaqmx.Task() as task:
+                task.do_channels.add_do_chan(channel)
                 task.write(True)
-                time.sleep(high_time)
+                time.sleep(0.1)
                 task.write(False)
-                time.sleep(low_time)
+        elif page == 'Power':
+            with nidaqmx.Task() as task:
+                task.do_channels.add_do_chan(channel)
+                task.write(True)
+                time.sleep(0.1)
+                task.write(False)
+            
+                
 
     def on_tab_change(self, event):
         selected_tab = event.widget.select()
@@ -395,10 +393,10 @@ class PowerMeterApp(App):
     
         if tab_text == "Longueur d'onde":
             print("Longueur d'onde sélectionnée → Servo vers 180°")
-            self.send_software_pwm(angle_rad=np.pi, channel=f"{self.device.get_firmware_from_device()}/port1/line0")  # ≈ 180°
+            self.send_software_pwm(channel=f"{self.device.get_firmware_from_device()}/port1/line0", page = 'Wavelenght')  # ≈ 180°
         elif tab_text == "Puissance":
             print("Puissance sélectionnée → Servo vers 0°")
-            self.send_software_pwm(angle_rad=0, channel=f"{self.device.get_firmware_from_device()}/port1/line0")  # Retour à 0°
+            self.send_software_pwm(channel=f"{self.device.get_firmware_from_device()}/port1/line1", page = 'Power')  # Retour à 0°
     
 
     def get_time(self):
@@ -557,7 +555,7 @@ class PowerMeterApp(App):
         self.position_label.config(text=f"(x={x_peak:.2f}, "f"y={y_peak:.2f})")
        
         f = time.time()
-        print('total', f-d)
+        print('Temps total', f-d)
         
         if self.is_refreshing:
             self.after(300, self.update_loop)   # To-Do ajouter bouton pour modifier rate
@@ -748,7 +746,6 @@ class PowerMeterDevice(Bindable):
 
     def get_firmware_from_device(self):
         self.dev = self.supertest.daq_device
-        print(self.dev)
 
         return self.dev
 

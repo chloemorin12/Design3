@@ -32,13 +32,10 @@ class Acquisition:
     def get_active_device(self):
         system = System.local()
         device_names = [device.name for device in system.devices]
-        #print(device_names)
 
         if not device_names:
             raise RuntimeError("No NI-DAQmx devices detected.")
-        
-        
-        #Choisi le premier device
+
         active_device = device_names[0]
         print(f"Using device: {active_device}")
         return active_device
@@ -110,10 +107,9 @@ class Acquisition:
                     max_value = np.nanmax(list(np.nanmax(float(row[-1]) for row in self.data)))
                     #print(max_value)
                     stop_time = time.perf_counter()
-                    elapsed_time = stop_time - start_time
-                    print(f"Elapsed time: {elapsed_time:.2f} seconds")  
-                    print('allo oli', np.nanmean(self.liste_voltage))                  
+                    elapsed_time = stop_time - start_time                  
                     return self.data, self.liste_ref, self.liste_voltage, self.liste_tension_ref
+                
                 if value <= 7:
                     self.voltage_data[i] = np.nan 
                     continue
@@ -145,8 +141,8 @@ class Acquisition:
 
 
     def Curve_temp_voltage(self):
-        voltages = np.array([9.51, 9.25, 8.55, 7.9, 7.6, 7.2, 6.65 , 5.5, 5.1, 1.9])
-        temperatures = np.array([100, 95, 90, 85, 80, 75, 70 ,60, 55, 22])    
+        voltages = np.array([0.6, 3.11, 4.5])
+        temperatures = np.array([22, 32,50])    
         temperatures_kelvin = temperatures + 273.15
         initial_guess = [1e-3, 1e-4, 1e-7]
         self.params, covariance = curve_fit(steinhart_hart_resistance_to_temperature, voltages, temperatures_kelvin, p0=initial_guess)
@@ -176,7 +172,8 @@ class Acquisition:
             data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
             self.wavelenght_tension[113] = np.mean(data)  
             powers = self.wavelenght_tension[~np.isnan(self.wavelenght_tension).any(axis=1)]
-            powers.tolist()
+            powers[0].tolist()
+            print('Les puissances des fucking filters', powers)
             return powers  
     
     def fitting(self):
@@ -187,18 +184,6 @@ class Acquisition:
         initial_guess = [float(max(z)-min(z)), 0, 0, 2.5, 2.5, float(min(z))]
         bounds = ([0, -12.5, -12.5, 0, 0, -np.inf], [np.inf, 12.5, 12.5, np.inf, np.inf, np.inf])
         xy = np.vstack((x, y))   # isole x et y 
-        '''
-        try:
-            params, _ = curve_fit(gaussian_2d, xy, z, p0=initial_guess, bounds=bounds)
-            A, x_peak, y_peak, sigma_x, sigma_y, offset = params
-            xi = np.linspace(-13, 13, 50)
-            yi = np.linspace(-13, 13, 50)
-            X_grid, Y_grid = np.meshgrid(xi, yi)
-            Z_fit = gaussian_2d((X_grid.ravel(), Y_grid.ravel()), *params).reshape(X_grid.shape)
-        except RuntimeError as e:
-            print("Error in curve fitting:", e)
-            return None, None, None, None
-        '''
 
         try:
             # Attempt to fit the curve
