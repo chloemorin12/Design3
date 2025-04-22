@@ -229,6 +229,9 @@ class PowerMeterApp(App):
 
         self.plot_puissance = plt.figure(figsize=(5, 4))
         self.ax_puissance = self.plot_puissance.add_subplot(111)
+        self.ax_puissance.set_ylim(0, 11)
+        self.ax_puissance.set_ylabel('Puissance [W]')
+        self.ax_puissance.set_xlabel('Tic temporel')
         self.ax_puissance.set_facecolor("#ffffff")
         self.ax_puissance.grid(True, linestyle="--", alpha=0.3)
         self.ax_puissance.set_title("Historique de Puissance", fontsize=11, color="#2c3e50")
@@ -285,7 +288,7 @@ class PowerMeterApp(App):
             print("Le DAQ n'est pas connecté: ", e)
 
         # --- Données mesurées ---
-        self.measurement_label = tk.Label(self.power_frame, text="--- mW",
+        self.measurement_label = tk.Label(self.power_frame, text="--- W",
                                           font=("Segoe UI", 16, "bold"), fg="#1e3d59", bg="#f0f4f8")
         self.measurement_label.grid(row=2, column=0, pady=15, padx=5)
 
@@ -498,6 +501,9 @@ class PowerMeterApp(App):
         #self.first_axis.plot(self.x, self.y, "k-")
         self.ax_puissance.cla()  # Clears the axes
         self.ax_puissance.plot(range(len(self.historique_temps_mesure)), self.historique_puissance)  # modifier axe des x ?
+        self.ax_puissance.set_ylim(0, 20)
+        self.ax_puissance.set_ylabel('Puissance [W]')
+        self.ax_puissance.set_xlabel('Tic temporel')
         #if len(self.historique_puissance) > 20:
         #    self.ax_puissance.plot(range(len(self.historique_temps_mesure[-20:])), self.historique_puissance[-20:])  # modifier axe des x ?
         #else:
@@ -519,7 +525,7 @@ class PowerMeterApp(App):
         self.ax.set_ylabel("Position Y [cm]")
         #self.ax.imshow(self.device.get_temperature_from_device()[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
         
-        im = self.ax.imshow(values[1], origin='lower', extent=(-15,15,-15,15), cmap='coolwarm')
+        im = self.ax.imshow(values[1], origin='lower', extent=(-15,15,-15,15), cmap='coolwarm', vmin=20, vmax=60)
         self.ax.plot(values[2], values[3], 'kx', markersize=10, markeredgewidth=3)
         self.colorbar = self.fig.colorbar(im, ax=self.ax)
         self.colorbar.set_label("Température [°C]") 
@@ -542,11 +548,11 @@ class PowerMeterApp(App):
         self.historique_temps_mesure.append(self.get_time())
         self.historique_position_x.append(x_peak)      # modifier pour données en temps réel
         self.historique_position_y.append(y_peak)        # modifier pour données en temps réel
-        self.historique_puissance.append(power)
+        self.historique_puissance.append(power/1000)
         #self.after(0, self.update_plot)  # Update the plot
         self.update_plot()
 
-        self.measurement_label.config(text=f"{power:.2f} mW")
+        self.measurement_label.config(text=f"{power/1000:.2f} W")
         
         self.position_label.config(text=f"(x={x_peak:.2f}, "f"y={y_peak:.2f})")
        
@@ -554,7 +560,7 @@ class PowerMeterApp(App):
         print('Temps total', f-d)
         
         if self.is_refreshing:
-            self.after(300, self.update_loop)   # To-Do ajouter bouton pour modifier rate
+            self.after(1, self.update_loop)   # To-Do ajouter bouton pour modifier rate
 
         #last_pos = data_gradient_temperature()
         #self.plot_position.append(last_pos[0], last_pos[1])
@@ -664,8 +670,9 @@ class PowerMeterDevice(Bindable):
         and can be used direectly by the app.
         """
         self.power = 404
-        self.wavelength = 1064 
+        self.wavelength = 976 
         #self.firmware = None
+        self.old = 0
         self.temperature = []
         self.z = None 
         self.dev = None 
@@ -687,7 +694,7 @@ class PowerMeterDevice(Bindable):
         data = data[-1]
         
         self.save_voltage_to_csv(voltage, data, self.supertest.liste_ref, self.supertest.liste_tension_ref)  # Save voltage values to CSV
-        self.power = puissance_calcul(self.supertest.data , self.supertest.liste_ref)
+        self.power, self.old = puissance_calcul(self.supertest.data , self.supertest.liste_ref, self.old)
         #print(self.wavelength)
         self.power = corr_spectrale(self.power, self.wavelength)    # Avec corection spectrale Problème communication longeuru d'onde avec l'autre class
 

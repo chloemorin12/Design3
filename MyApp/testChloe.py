@@ -59,21 +59,24 @@ def inverse_transfer_function( Gain, w_n, z):
 
 # paramètre de la fonction de transfert (2e ordre)
 
-def puissance_calcul(data, ref):
+def puissance_calcul(data, ref, old):
     inital_data_t_1 = [0]*53
     inital_data_t_2 = [0]*53
 
-
+    
     # changer pour si la liste de data a au moins 2 ou trois colonne, prendre les colonne (-2), (-3)
 
-
-    ref = [ref[1], ref[2]]
-    ref = np.mean(ref)
-      
+    #ref = [ref[1], ref[2]]
+    #ref = np.mean(ref)
+    ref = 30
     
     data = data[~np.isnan(data).any(axis=1)] # tension values 
     data = data.T 
-
+    
+    T_max = np.max(data)
+    prediction_temperature(old, T_max)
+    old = T_max
+    
     if data.shape[0] == 4:
         inital_data_t_1 = data[-2]
         inital_data_t_1 = inital_data_t_1 - ref
@@ -101,14 +104,15 @@ def puissance_calcul(data, ref):
         #P_t = E/k + (tau/k)*dE
 
             # 2e ordre
+            
+
     T_k = np.max(data)
     T_k_1 = np.max(inital_data_t_1)
     T_k_2 = np.max(inital_data_t_2)
         # Fctn_de_transfert 2e ordre
-    P_t = c_0*T_k + c_1*T_k_1 + c_2*T_k_2
-            
+    P_t = c_0*T_k + c_1*T_k_1 + c_2*T_k_2  
 
-    return P_t
+    return P_t, old
 
 
 #Pour sortir les données

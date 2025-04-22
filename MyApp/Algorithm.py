@@ -12,8 +12,7 @@ def steinhart_hart_resistance_to_temperature(resistance, coefficients):
     lnR = math.log(resistance)
     temperature_kelvin = 1 / (A + B * lnR + C * lnR**3)
     return temperature_kelvin
-
-# Simulation parameters
+'''
 sampling_interval = 1  # s
 total_time = 600          # s
 time_steps = int(total_time / sampling_interval)
@@ -99,14 +98,17 @@ plt.ylabel("Température Derivé")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
-plt.show()
+plt.show()'''
 
 def prediction_temperature(temperature_avant, temperature_presente):
+    if temperature_avant == 0:
+        return 20
     sampling_interval = 1
-    time_steps = int(total_time / sampling_interval)
-    ambient = 25.0 
-    k = 0.5
+    time_steps = 3
+    ambient = 22.0 
+    k = 0.32/3
     dTdt = (temperature_presente - temperature_avant) / sampling_interval
     print(dTdt)
-    predicted_Temperature = new_temp + dTdt / k
+    predicted_Temperature = temperature_presente + dTdt / k
+    print('Prédiction:', round(predicted_Temperature,2))
     return predicted_Temperature

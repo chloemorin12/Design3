@@ -81,8 +81,8 @@ class Acquisition:
         self.liste_voltage = []
         self.liste_ref = []
         self.liste_tension_ref = []
-        voltages = np.array([9.51, 9.25, 8.55, 7.9, 7.6, 7.2, 6.65 , 5.5, 5.1, 1.9])
-        temperatures = np.array([90, 85, 80, 75, 70, 65, 60 ,55, 50, 22])
+        voltages = np.array([0.05, 3.11, 4.5])
+        temperatures = np.array([22, 32,50])  
         coeffs = np.polyfit(voltages, temperatures, deg=1)
         poly_func = np.poly1d(coeffs)
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
@@ -107,7 +107,8 @@ class Acquisition:
                     max_value = np.nanmax(list(np.nanmax(float(row[-1]) for row in self.data)))
                     #print(max_value)
                     stop_time = time.perf_counter()
-                    elapsed_time = stop_time - start_time                  
+                    elapsed_time = stop_time - start_time        
+                    print('Tension max: ', max(self.liste_voltage))          
                     return self.data, self.liste_ref, self.liste_voltage, self.liste_tension_ref
                 
                 if value <= 7:
@@ -151,30 +152,38 @@ class Acquisition:
             
                 
     def Wavelength_thermistor(self):
+        temp = []
+        voltages = np.array([0.02, 3.11, 4.5])
+        temperatures = np.array([22, 32,50])  
+        coeffs = np.polyfit(voltages, temperatures, deg=1)
+        poly_func = np.poly1d(coeffs)
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
             do_task.do_channels.add_do_chan(f"{self.daq_device}/port0/line0:7")
-            ai_task.ai_channels.add_ai_voltage_chan(f"{self.daq_device}/ai7")
+            ai_task.ai_channels.add_ai_voltage_chan(f"{self.daq_device}/ai0")
             ai_task.timing.cfg_samp_clk_timing(
                 rate=self.sample_rate,
                 sample_mode=AcquisitionType.FINITE,
                 samps_per_chan=self.samples_to_read)
-
-            do_task.write(65, auto_start=True)
+            
+            do_task.write(153, auto_start=True)
             data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
-            self.wavelenght_tension[65] = np.mean(data)
-            do_task.write(7, auto_start=True)
+            self.wavelenght_tension[153] = np.mean(data)
+            do_task.write(170, auto_start=True)
             data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
-            self.wavelenght_tension[7] = np.mean(data) 
-            do_task.write(0, auto_start=True)
+            self.wavelenght_tension[170] = np.mean(data) 
+            do_task.write(136, auto_start=True)
             data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
-            self.wavelenght_tension[0] = np.mean(data) 
-            do_task.write(113, auto_start=True)
+            self.wavelenght_tension[136] = np.mean(data) 
+            do_task.write(187, auto_start=True)
             data = ai_task.read(number_of_samples_per_channel=self.samples_to_read)
-            self.wavelenght_tension[113] = np.mean(data)  
+            self.wavelenght_tension[187] = np.mean(data)  
             powers = self.wavelenght_tension[~np.isnan(self.wavelenght_tension).any(axis=1)]
             powers[0].tolist()
-            print('Les puissances des fucking filters', powers)
-            return powers  
+            powers = 2.8-powers
+            for i in powers:
+                temp.append(poly_func(i)-20.2)
+            print('Les tensions des fucking filters', temp)
+            return temp
     
     def fitting(self):
         diameter = 25
