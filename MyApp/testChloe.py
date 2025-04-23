@@ -58,7 +58,7 @@ def inverse_transfer_function( Gain, w_n, z):
 
 
 # paramètre de la fonction de transfert (2e ordre)
-'''
+
 def puissance_calcul(data, ref, old):
     inital_data_t_1 = [0]*53
     inital_data_t_2 = [0]*53
@@ -66,8 +66,8 @@ def puissance_calcul(data, ref, old):
     
     # changer pour si la liste de data a au moins 2 ou trois colonne, prendre les colonne (-2), (-3)
 
-    #ref = [ref[1], ref[2]]
-    #ref = np.mean(ref)
+    ref = [ref[1], ref[2]]
+    ref = np.mean(ref)
     ref = 30
     
     data = data[~np.isnan(data).any(axis=1)] # tension values 
@@ -113,12 +113,12 @@ def puissance_calcul(data, ref, old):
     P_t = c_0*T_k + c_1*T_k_1 + c_2*T_k_2  
 
     return P_t, old
-'''
+
 
 
 # VERSION AVEC PRÉDICTION
 rechauffement, refroidissement = True, False
-
+'''
 def puissance_calcul(data, ref, old, alexis):
     global rechauffement, refroidissement
     ref = [ref[1], ref[2]]
@@ -126,12 +126,13 @@ def puissance_calcul(data, ref, old, alexis):
     data = data[~np.isnan(data).any(axis=1)] # tension values 
     data = data.T 
     T_max = np.max(data[-1])
-    #print('T_max',T_max)
+    print('T_max',T_max)
+    
     if alexis == 0:
         T_predit = prediction_temperature(T_max, T_max)
     else:
         T_predit = prediction_temperature(alexis, T_max)
-        T_max = T_predit
+        #T_max = T_predit
     if T_max - old < -0.3:
         rechauffement, refroidissement = False, True
     
@@ -147,13 +148,17 @@ def puissance_calcul(data, ref, old, alexis):
     #old = T_predit
     old = T_max
     alexis = T_predit
-    P_ch = 0.0077*T_max**2 - 0.3708*T_max + 4.4904
     P_r = 0.0309*T_max**2 - 2.6053*T_max + 54.833
-
     P_t = (1 - poid) * P_ch + poid * P_r
+    
+    P_t = 0.0077*T_max**2 - 0.3708*T_max + 4.4904
+    
+    
+
+    
     return P_t, old, alexis
 
-'''
+
 def puissance_calcul(data, ref, old, alexis):
     global rechauffement, refroidissement
     ref = [ref[1], ref[2]]

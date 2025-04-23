@@ -340,7 +340,7 @@ class PowerMeterApp(App):
 
         # Charger l'image PNG
         try:
-            image = Image.open("Logo_test_2.jpg")  # Remplacez par le chemin de votre image
+            image = Image.open("Logo_transparent.png")  # Remplacez par le chemin de votre image
             image = image.resize((430, 600), Image.Resampling.LANCZOS)  # Redimensionner l'image si nécessaire
             self.image_tk = ImageTk.PhotoImage(image)
 
@@ -441,7 +441,7 @@ class PowerMeterApp(App):
     def on_tab_change(self, event):
         if self.initialise:
             return
-        
+
         selected_tab = event.widget.select()
         tab_text = event.widget.tab(selected_tab, "text")
 
@@ -808,7 +808,7 @@ class PowerMeterDevice(Bindable):
             data = data[-1]
             
             self.save_voltage_to_csv(voltage, data, self.supertest.liste_ref, self.supertest.liste_tension_ref)  # Save voltage values to CSV
-            self.power, self.old, self.alexis = puissance_calcul(self.supertest.data , self.supertest.liste_ref, self.old, self.alexis)
+            self.power, self.old = puissance_calcul(self.supertest.data , self.supertest.liste_ref, self.old)
             #print(self.wavelength)
             self.power = corr_spectrale(self.power, self.wavelength)    # Avec corection spectrale Problème communication longeuru d'onde avec l'autre class
             

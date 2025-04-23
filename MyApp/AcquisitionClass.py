@@ -184,8 +184,8 @@ class Acquisition:
             #print('Les tensions des thermistors', powers)
             #powers = 2.8-powers
             for i in powers:
-                temp.append(poly_func(i))
-            #print('Les températures des fucking filters', temp)
+                temp.append(poly_func(i)/2)
+            print('Les températures des fucking filters', temp)
             return temp
     
     def fitting(self):
