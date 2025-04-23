@@ -22,6 +22,7 @@ import numpy as np
 import nidaqmx
 from nidaqmx.errors import DaqError
 import csv
+from PIL import Image, ImageTk
 
 
 class PowerMeterApp(App):
@@ -65,6 +66,9 @@ class PowerMeterApp(App):
 
 
 
+
+
+
         
         # Frame pour les entrées de puissances et les cases
         top_frame = tk.Frame(self.tab_longeur_onde)
@@ -86,7 +90,7 @@ class PowerMeterApp(App):
 
         self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_change)
 
-        puissance_wavelength = [500, 55, 499, 250] # Cette liste deviendra dans le futur les données de puissance des thermistances où les filtres
+        #puissance_wavelength = [500, 55, 499, 250] # Cette liste deviendra dans le futur les données de puissance des thermistances où les filtres
 
         # Variables pour les trois cases
         case1_value = tk.DoubleVar(value=1.0)  # Valeur initiale
@@ -227,7 +231,7 @@ class PowerMeterApp(App):
                                          bg="#f0f4f8", fg="#2c3e50", font=("Segoe UI", 10, "bold"), bd=1, relief="solid")
         self.power_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
 
-        self.plot_puissance = plt.figure(figsize=(5, 4))
+        self.plot_puissance = plt.figure(figsize=(7, 5))
         self.ax_puissance = self.plot_puissance.add_subplot(111)
         self.ax_puissance.set_ylim(0, 11)
         self.ax_puissance.set_ylabel('Puissance [W]')
@@ -257,7 +261,7 @@ class PowerMeterApp(App):
                                        bg="#f0f4f8", fg="#2c3e50", font=("Segoe UI", 10, "bold"), bd=1, relief="solid")
         self.pos_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
 
-        self.fig = plt.figure(figsize=(5, 4))
+        self.fig = plt.figure(figsize=(7, 5))
         self.ax = self.fig.add_subplot(111)
         self.ax.set_facecolor("#ffffff")
         self.ax.grid(True, linestyle="--", alpha=0.3)
@@ -281,6 +285,25 @@ class PowerMeterApp(App):
 
         # Add black x (initial dummy position)
         self.cross_marker, = self.ax.plot([0], [0], 'kx', markersize=10, markeredgewidth=3)
+
+
+
+        # Ajouter une image dans l'onglet "Puissance"
+        #self.image_frame = tk.Frame(self.graphs_frame, bg="#f0f4f8")
+        #self.image_frame.grid(row=4, column=0, columnspan=3, sticky="ew", padx=10, pady=5)
+
+        # Charger l'image PNG
+        try:
+            image = Image.open("Logo_test_2.jpg")  # Remplacez par le chemin de votre image
+            image = image.resize((430, 600), Image.Resampling.LANCZOS)  # Redimensionner l'image si nécessaire
+            self.image_tk = ImageTk.PhotoImage(image)
+
+            # Ajouter l'image dans un Label
+            self.image_label = tk.Label(self.graphs_frame, image=self.image_tk, bg="#f0f4f8")
+            self.image_label.grid(row=0, column=3, padx=10, pady=10)
+        except Exception as e:
+            print(f"Erreur lors du chargement de l'image : {e}")
+
         '''
         try:
             values = self.device.get_temperature_from_device()
@@ -576,11 +599,11 @@ class PowerMeterApp(App):
         self.historique_temps_mesure.append(self.get_time())
         self.historique_position_x.append(x_peak)      # modifier pour données en temps réel
         self.historique_position_y.append(y_peak)        # modifier pour données en temps réel
-        self.historique_puissance.append(power/1000)
+        self.historique_puissance.append(power)
         #self.after(0, self.update_plot)  # Update the plot
         self.update_plot()
 
-        self.measurement_label.config(text=f"{power/1000:.2f} W")
+        self.measurement_label.config(text=f"{power:.2f} W")
         
         self.position_label.config(text=f"(x={x_peak:.2f}, "f"y={y_peak:.2f})")
        
@@ -699,8 +722,9 @@ class PowerMeterDevice(Bindable):
         self.power = 404
         self.wavelength = 976 
         #self.firmware = None
-        self.old = 0
+        self.old = 19.6
         self.temperature = []
+        self.alexis = 0
         self.z = None 
         self.dev = None 
         
@@ -722,7 +746,7 @@ class PowerMeterDevice(Bindable):
         data = data[-1]
         
         self.save_voltage_to_csv(voltage, data, self.supertest.liste_ref, self.supertest.liste_tension_ref)  # Save voltage values to CSV
-        self.power, self.old = puissance_calcul(self.supertest.data , self.supertest.liste_ref, self.old)
+        self.power, self.old, self.alexis = puissance_calcul(self.supertest.data , self.supertest.liste_ref, self.old, self.alexis)
         #print(self.wavelength)
         self.power = corr_spectrale(self.power, self.wavelength)    # Avec corection spectrale Problème communication longeuru d'onde avec l'autre class
         

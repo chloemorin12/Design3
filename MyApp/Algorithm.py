@@ -142,9 +142,15 @@ plt.show()'''
 def prediction_temperature(temperature_avant, temperature_presente):
     if temperature_avant == 0:
         return 20
+    
     sampling_interval = 1
     k = 0.1
     dTdt = (temperature_presente - temperature_avant) / sampling_interval
+    print('Gradient:', dTdt)
+
+    #if abs(dTdt) > 0.5:
     predicted_Temperature = temperature_presente + dTdt / k
     print('Prédiction:', round(predicted_Temperature,2))
     return predicted_Temperature
+    #else:
+        #return temperature_presente

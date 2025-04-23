@@ -28,6 +28,7 @@ class App(Bindable):
         self.check_requirements()
         self.create_menu()
         self.scheduled_tasks = []
+        #self.root.attributes("-fullscreen", True)
         App.app = self
 
 
