@@ -111,7 +111,7 @@ class Acquisition:
                     #print(max_value)
                     stop_time = time.perf_counter()
                     elapsed_time = stop_time - start_time        
-                    print('Tension max: ', max(self.liste_voltage))          
+                    #print('Tension max: ', max(self.liste_voltage))          
                     return self.data, self.liste_ref, self.liste_voltage, self.liste_tension_ref
                 
                 if value <= 7:
@@ -181,11 +181,11 @@ class Acquisition:
             self.wavelenght_tension[187] = np.mean(data)  
             powers = self.wavelenght_tension[~np.isnan(self.wavelenght_tension).any(axis=1)]
             powers[0].tolist()
-            print('Les tensions des thermistors', powers)
+            #print('Les tensions des thermistors', powers)
             #powers = 2.8-powers
             for i in powers:
                 temp.append(poly_func(i))
-            print('Les températures des fucking filters', temp)
+            #print('Les températures des fucking filters', temp)
             return temp
     
     def fitting(self):

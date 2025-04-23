@@ -138,7 +138,7 @@ plt.grid(True)
 plt.tight_layout()
 plt.show()'''
 
-
+'''
 def prediction_temperature(temperature_avant, temperature_presente):
     if temperature_avant == 0:
         return 20
@@ -154,3 +154,14 @@ def prediction_temperature(temperature_avant, temperature_presente):
     return predicted_Temperature
     #else:
         #return temperature_presente
+'''
+def prediction_temperature(temperature_avant, temperature_presente):
+    #print('Ici', temperature_avant, temperature_presente)
+    sampling_interval = 1
+    k = 2
+    RAW_dTdt = (temperature_presente - temperature_avant) / sampling_interval
+    dTdt = np.tanh(RAW_dTdt / 3) * 2
+    #print('gradient', dTdt)
+    predicted_Temperature = temperature_presente + dTdt / k
+    #print('Prédiction:', round(predicted_Temperature,2))
+    return predicted_Temperature

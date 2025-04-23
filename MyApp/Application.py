@@ -30,7 +30,7 @@ class PowerMeterApp(App):
     def __init__(self):
         App.__init__(self)
         self.root.option_add("*Font", "Segoe 10")
-        
+        self.root.configure(bg="#f0f4f8")
         self.device = PowerMeterDevice()
         self.is_refreshing = False
         self.initialise = True
@@ -55,6 +55,8 @@ class PowerMeterApp(App):
         # Disposition des éléments dans les onglets
         self.root.grid_rowconfigure(0, weight=1)  
         self.root.grid_columnconfigure(0, weight=1)  
+        #self.root.attributes("-fullscreen", True)  # Mettre l'application en plein écran
+        self.root.state('zoomed')  # Mettre l'application en plein écran (Windows)
         self.notebook = ttk.Notebook(self.root)
         self.notebook.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)  
 
@@ -124,7 +126,7 @@ class PowerMeterApp(App):
         # Permet d'acquisitionner pour obtenir les valeur de températures de termistance des filtres
         def change_calib():
             self.calibration = self.ST.Wavelength_thermistor()   # Va chercher les valeurs de calibration
-            print(self.calibration)
+            #print(self.calibration)
 
         # Bouton 'Calibration' activer par l'utilisateur pour calibrer lorsque le laser est éteint
         self.calib_button = tk.Button(self.tab_longeur_onde, text="Calibration", command=change_calib, font=("Arial", 12), bg="lightblue")
@@ -143,7 +145,7 @@ class PowerMeterApp(App):
         def on_button_click():
             T_now = self.ST.Wavelength_thermistor()
             Powers = wl_power(self.calibration, T_now)
-            print(Powers)
+            #print(Powers)
             iterations = 0
             ytols = np.array([2.0, 2.0, 2.0])
                 
@@ -198,7 +200,7 @@ class PowerMeterApp(App):
 
         # Pour le moteur
         self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_change)
-        self.initialise = False
+        
 
         # Bouton pour lancer les calculs
         # Ajouter instructions au besoin
@@ -443,17 +445,19 @@ class PowerMeterApp(App):
         selected_tab = event.widget.select()
         tab_text = event.widget.tab(selected_tab, "text")
 
+        
         confirm = messagebox.askyesno("Confirmation", f"Voulez-vous vraiment passer à l'onglet '{tab_text}' ?")
         if not confirm:
+         # Prevent tab switching by re-selecting the current tab
             current_tab = event.widget.index("current")
             event.widget.select(current_tab)
             return
     
         if tab_text == "Longueur d'onde":
-            print("Longueur d'onde sélectionnée → Servo vers 180°")
+            #print("Longueur d'onde sélectionnée → Servo vers 180°")
             self.send_software_pwm(channel=f"{self.device.get_firmware_from_device()}/port1/line0", page = 'Wavelenght')  # ≈ 180°
         elif tab_text == "Puissance":
-            print("Puissance sélectionnée → Servo vers 0°")
+            #print("Puissance sélectionnée → Servo vers 0°")
             self.send_software_pwm(channel=f"{self.device.get_firmware_from_device()}/port1/line1", page = 'Power')  # Retour à 0°
     
 
@@ -486,9 +490,21 @@ class PowerMeterApp(App):
             self.wavelength_entry_label.config(state='disabled')
             self.wavelength_button_1.config(state='disabled')            
         else:
+            try:
+                pass
+            except DaqReadError as e:
+                messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : {str(e)}\nVeuillez vérifier la connexion USB ou le câble.")
+            
             self.is_refreshing = False
+            #try: 
+            #    pass
+            #except DaqReadError as e:
+            #    messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : {str(e)}\nVeuillez vérifier la connexion USB ou le câble.")
+                
             self.status_light.itemconfig(self.light_id, fill="red")
             self.start_button.config(text="Démarrer")
+
+            
             # Historique communication
             self.Évènements.append(self.get_time()+ ' : '+'La prise de donnée est mise en pause')
             #self.label_com.value_variable.set(self.get_time()+ ' : '+'La prise de donnée est mise en pause')
@@ -557,28 +573,17 @@ class PowerMeterApp(App):
         if x_data:
             self.ax_puissance.set_xlim(min(x_data), max(x_data))
         self.line_puissance.set_data(x_data, y_data)
-        self.ax_puissance.set_ylim(0, max(y_data) * 1.1 if y_data else 15)
+        #self.ax_puissance.set_ylim(0, max(y_data) * 1.1 if y_data else 15)
         self.canvas.draw()
 
-        #Changes
-        '''if hasattr(self, 'colorbar') and self.colorbar:
-            self.colorbar.remove() # Clears the colourbars
-
-        values = self.device.z# Modifier pour 
-        self.ax.cla()  # Clears the axes
-        self.ax.set_xlim(-15, 15)
-        self.ax.set_ylim(-15, 15)
-        self.ax.set_xlabel("Position X [mm]")
-        self.ax.set_ylabel("Position Y [mm]")'''
-        #self.ax.imshow(self.device.get_temperature_from_device()[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
+      
         
         
-        ##### À Enlever #######
-        '''im = self.ax.imshow(values[1], origin='lower', extent=(-15,15,-15,15), cmap='coolwarm', vmin=20, vmax=60)'''
-        ##### À Ajouter ######
         values = self.device.z  # [params, Z_interp, x_peak, y_peak]
         params = values[0]
         sigma = (params[3] + params[4]) / 2
+        
+
         if sigma >= 1.5 and sigma <= 4:
             self.red_circle.center = (values[2], values[3])
             self.red_circle.set_radius(sigma)
@@ -588,6 +593,10 @@ class PowerMeterApp(App):
         self.red_circle.center = (values[2], values[3])
         self.red_circle.set_radius(sigma)
         self.cross_marker.set_data([values[2]], [values[3]])
+        if self.device.power < 0.5:
+            self.red_circle.set_visible(False)
+            self.cross_marker.set_visible(False)
+            self.position_label.config(text="Pas de laser détecté")
         self.pos_canvas.draw()
         
         #À Enlever
@@ -604,6 +613,7 @@ class PowerMeterApp(App):
 
     def update_loop(self):
         try:
+            self.initialise = False
             print()
             self.temps2 = time.time()
             print('Temps Total:', self.temps2-self.temps1)
@@ -620,11 +630,12 @@ class PowerMeterApp(App):
             self.historique_position_y.append(y_peak)        # modifier pour données en temps réel
             self.historique_puissance.append(power)
             #self.after(0, self.update_plot)  # Update the plot
+            self.position_label.config(text=f"(x={x_peak:.2f}, "f"y={y_peak:.2f})")
             self.update_plot()
 
             self.measurement_label.config(text=f"{power:.2f} W")
             
-            self.position_label.config(text=f"(x={x_peak:.2f}, "f"y={y_peak:.2f})")
+            
         
             
             if self.is_refreshing:
@@ -634,6 +645,31 @@ class PowerMeterApp(App):
         except DaqReadError as e:
             messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : {str(e)}\nVeuillez vérifier la connexion USB ou le câble.")
             print("DAQ read error occurred:", e)
+            self.is_refreshing = False
+            #try: 
+            #    pass
+            #except DaqReadError as e:
+            #    messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : {str(e)}\nVeuillez vérifier la connexion USB ou le câble.")
+                
+            self.status_light.itemconfig(self.light_id, fill="red")
+            self.start_button.config(text="Démarrer")
+            
+            # Historique communication
+            self.Évènements.append(self.get_time()+ ' : '+'La prise de donnée est mise en pause')
+            #self.label_com.value_variable.set(self.get_time()+ ' : '+'La prise de donnée est mise en pause')
+            self.label_com.config(text=self.Évènements[len(self.Évènements)-1]
+                                          + '\n' + self.Évènements[len(self.Évènements)-2]
+                                          + '\n' + self.Évènements[len(self.Évènements)-3]
+                                          + '\n' + self.Évènements[len(self.Évènements)-4]
+                                          + '\n' + self.Évènements[len(self.Évènements)-5]) 
+            self.save_button.config(state='normal')
+            self.misea0.config(state='normal')
+            self.paramètre.config(state='normal') 
+            self.wavelength_entry.config(state='normal')
+            self.wavelength_button.config(state='normal')
+            self.connexion.config(state='normal')
+            self.wavelength_entry_label.config(state='normal')
+            self.wavelength_button_1.config(state='normal')
             return None
         #last_pos = data_gradient_temperature()
         #self.plot_position.append(last_pos[0], last_pos[1])
@@ -763,7 +799,7 @@ class PowerMeterDevice(Bindable):
 
 
     def get_power_from_device(self):
-        try:
+        #try:
             self.supertest.Power_thermistor()
             self.z = self.supertest.fitting()
             voltage = self.supertest.liste_voltage
@@ -777,7 +813,7 @@ class PowerMeterDevice(Bindable):
             self.power = corr_spectrale(self.power, self.wavelength)    # Avec corection spectrale Problème communication longeuru d'onde avec l'autre class
             
             return self.power
-        except DaqReadError as e:
+        #except DaqReadError as e:
             messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : {str(e)}\nVeuillez vérifier la connexion USB ou le câble.")
             print("DAQ read error occurred:", e)
             return None
@@ -786,15 +822,16 @@ class PowerMeterDevice(Bindable):
     # À tester
     def get_temperature_from_device(self):
         # Utilise les valeurs de tension pour l'instant et non de température !
-        try:
+        #try:
             self.supertest.Power_thermistor()
             self.z = self.supertest.fitting()
-        except DaqError as e:
+            return self.z
+        #except DaqError as e:
             messagebox.showerror("Erreur DAQ", "Erreur de communication avec le DAQ. Vérifier la connexion.")
             print("DAQ error occurred:", e)
             return None
 
-        return self.z
+        
     
     
     # à valider Pour les tests préliminaires seulement
