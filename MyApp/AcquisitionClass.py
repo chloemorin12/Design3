@@ -181,10 +181,11 @@ class Acquisition:
             self.wavelenght_tension[187] = np.mean(data)  
             powers = self.wavelenght_tension[~np.isnan(self.wavelenght_tension).any(axis=1)]
             powers[0].tolist()
-            powers = 2.8-powers
+            print('Les tensions des thermistors', powers)
+            #powers = 2.8-powers
             for i in powers:
-                temp.append(poly_func(i)-20.2)
-            print('Les tensions des fucking filters', temp)
+                temp.append(poly_func(i))
+            print('Les températures des fucking filters', temp)
             return temp
     
     def fitting(self):

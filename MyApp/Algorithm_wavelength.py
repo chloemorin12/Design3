@@ -157,7 +157,8 @@ def wavelength_calculator(Powers ,ytols, canvas_frame, label):
     try:
         # Lire les pourcentages à partir de l'entrée utilisateur
         puissances = Powers
-        pourcentages = [(p / puissances[0]) * 100 for p in puissances]
+        #pourcentages = [(p / puissances[0]) * 100 for p in puissances]
+        pourcentages = puissances
         print(pourcentages) 
         # Calcul des longueurs d'onde correspondant aux pourcentages approximatifs
         longueurs_donde_trouvees1, longueurs_donde_trouvees2, longueurs_donde_trouvees3 = trouver_longueurs_donde(pourcentages, ytols)

@@ -124,10 +124,32 @@ class PowerMeterApp(App):
         create_case(case_frame, case3_value, "Incertitude F4 (%):", 2, 0)
 
         self.ST = Acquisition()
-       
+
+        self.calibration = [20,20, 20, 20]
+
+
+        def change_calib():
+            self.calibration = self.ST.Wavelength_thermistor()  # liste
+            print(self.calibration)
+            
+        self.calib_button = tk.Button(self.tab_longeur_onde, text="Calibration", command=change_calib, font=("Arial", 12), bg="lightblue")
+        self.calib_button.grid(row=0, column=2, padx=10, pady=10)
+
+        
+
+        def wl_power(calib, T_now):
+            delta = abs(np.array(T_now) - np.array(calib))
+            Powers = delta /np.max(delta) * 100
+            return Powers
+
+
+
+
+
         def on_button_click():
-            TestWL = self.ST.Wavelength_thermistor()
-            Powers = TestWL
+            T_now = self.ST.Wavelength_thermistor()
+            Powers = wl_power(self.calibration, T_now)
+            print(Powers)
             iterations = 0
             ytols = np.array([2.0, 2.0, 2.0])
                 
@@ -727,6 +749,7 @@ class PowerMeterDevice(Bindable):
         self.alexis = 0
         self.z = None 
         self.dev = None 
+        self.calibration = [0,0,0,0]
         
 
 
@@ -803,14 +826,10 @@ class PowerMeterDevice(Bindable):
 
         return self.dev
 
-    '''
-    def get_wavelength_from_device(self):
-            if self.debug:
-                self.wavelength = 0
-            else:
-                pass # Update via USB
-            return self.wavelength
-    '''
+    
+    #def get_wavelength_from_device(self):
+            
+    
 
     def update_from_device(self):
         self.get_power_from_device()
