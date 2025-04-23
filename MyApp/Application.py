@@ -23,6 +23,7 @@ import nidaqmx
 from nidaqmx.errors import DaqError
 import csv
 from PIL import Image, ImageTk
+from nidaqmx.errors import DaqReadError
 
 
 class PowerMeterApp(App):
@@ -32,6 +33,7 @@ class PowerMeterApp(App):
         
         self.device = PowerMeterDevice()
         self.is_refreshing = False
+        self.initialise = True
 
         self.ct = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.historique_puissance = []
@@ -42,57 +44,45 @@ class PowerMeterApp(App):
         self.temps1 = 0
         self.temps2 = 0
 
+        
         self.root.title("Puissance-mètre")
 
-        # Configure the root window to allow expansion
-        self.root.grid_rowconfigure(0, weight=1)  # Make row 0 expandable
-        self.root.grid_columnconfigure(0, weight=1)  # Make column 0 expandable
+        #self.root.attributes("-fullscreen", True)
 
-        # Create a Notebook widget
+        #self.root.bind("<Escape>", self.exit_fullscreen)
+
+
+        # Disposition des éléments dans les onglets
+        self.root.grid_rowconfigure(0, weight=1)  
+        self.root.grid_columnconfigure(0, weight=1)  
         self.notebook = ttk.Notebook(self.root)
-        self.notebook.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)  # Use sticky + no padding
+        self.notebook.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)  
 
-        # Add tabs to the notebook
+
+
+        # Création des onglets
         self.tab_puissance = tk.Frame(self.notebook)
         self.notebook.add(self.tab_puissance, text="Puissance")
-        self.tab_puissance.grid_rowconfigure(0, weight=1)  # Make row 0 expandable
-        self.tab_puissance.grid_columnconfigure(0, weight=1)  # Make column 0 expandable
+        self.tab_puissance.grid_rowconfigure(0, weight=1) 
+        self.tab_puissance.grid_columnconfigure(0, weight=1)  
 
         self.tab_longeur_onde = tk.Frame(self.notebook)
         self.notebook.add(self.tab_longeur_onde, text="Longueur d'onde")
-        self.tab_longeur_onde.grid_rowconfigure(0, weight=1)  # Make row 0 expandable   
-        self.tab_longeur_onde.grid_columnconfigure(0, weight=1)  # Make column 0 expandable
+        self.tab_longeur_onde.grid_rowconfigure(0, weight=1)   
+        self.tab_longeur_onde.grid_columnconfigure(0, weight=1)  
 
 
 
-
-
-
-
-        
-        # Frame pour les entrées de puissances et les cases
+        # Disposition sur l'onglet longueur d'onde
         top_frame = tk.Frame(self.tab_longeur_onde)
         top_frame.grid(row=0, column=0, padx=10, pady=10, sticky="n")
-
-        #self.ask_wavelength = tk.LabelFrame(self.tab_longeur_onde, text=" Calcul longueur d'onde")
-        #self.ask_wavelength.grid(row=0, column=0, columnspan=1, sticky="ew", padx=10, pady=5)
-
-        # Ajouter un label : Message sur le fonctionenment au besoin (TO-DO)
-        label = tk.Label(top_frame, text="Cliquez sur 'Lancer les calculs'", font=("Arial", 12))
-        label.grid(row=0, column=0, columnspan=1, padx=10, pady=10)
-
-
-
-
 
         main_frame = tk.Frame(self.tab_longeur_onde)
         main_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="n")
 
-        self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_change)
 
-        #puissance_wavelength = [500, 55, 499, 250] # Cette liste deviendra dans le futur les données de puissance des thermistances où les filtres
 
-        # Variables pour les trois cases
+        # Variables pour les trois cases d'incertitudes
         case1_value = tk.DoubleVar(value=1.0)  # Valeur initiale
         case2_value = tk.DoubleVar(value=1.0)
         case3_value = tk.DoubleVar(value=1.0)
@@ -123,29 +113,33 @@ class PowerMeterApp(App):
         create_case(case_frame, case2_value, "Incertitude F3 (%):", 1, 0)
         create_case(case_frame, case3_value, "Incertitude F4 (%):", 2, 0)
 
+        
+
+        
+
+        #Aquisition initiale pour la mesure de la longueur d'onde
         self.ST = Acquisition()
+        self.calibration = [20,20, 20, 20] # liste de calibration pour les températures des filtres
 
-        self.calibration = [20,20, 20, 20]
-
-
+        # Permet d'acquisitionner pour obtenir les valeur de températures de termistance des filtres
         def change_calib():
-            self.calibration = self.ST.Wavelength_thermistor()  # liste
+            self.calibration = self.ST.Wavelength_thermistor()   # Va chercher les valeurs de calibration
             print(self.calibration)
-            
+
+        # Bouton 'Calibration' activer par l'utilisateur pour calibrer lorsque le laser est éteint
         self.calib_button = tk.Button(self.tab_longeur_onde, text="Calibration", command=change_calib, font=("Arial", 12), bg="lightblue")
         self.calib_button.grid(row=0, column=2, padx=10, pady=10)
 
         
-
+        # Fonction qui retourne la différence enre les puissances mesurées et les puissances de calibraiton
         def wl_power(calib, T_now):
             delta = abs(np.array(T_now) - np.array(calib))
             Powers = delta /np.max(delta) * 100
             return Powers
 
+        
 
-
-
-
+        # Fonction pour calculer la longueur d'onde lorsque l'utilisateur clique sur le bouton 'Cliquez sur 'Lancer les calculs'
         def on_button_click():
             T_now = self.ST.Wavelength_thermistor()
             Powers = wl_power(self.calibration, T_now)
@@ -165,23 +159,51 @@ class PowerMeterApp(App):
             if wavelength_calculator(Powers, ytols, canvas_frame, result_value_label) == 0:
                 messagebox.showinfo("Info", "Aucune longueur d'onde ne correspond aux puissances entrées")
                 return 0, 0
-            final_result, incertainty, wl_individuelles = wavelength_calculator(Powers, ytols, canvas_frame, result_value_label)
+            final_result, incertainty, wl_individuelles = wavelength_calculator(Powers, ytols, canvas_frame, result_value_label) 
             graphe = plot_graph(wl_individuelles[0], wl_individuelles[1], wl_individuelles[2], final_result, incertainty, canvas_frame)
             messagebox.showinfo("Info", "La mesure de longueur d'onde est finie")
 
             
-            self.wavelength_entry.config(state='normal')  # Clear the entry field before inserting new text
-            self.wavelength_entry.delete(0, tk.END)  # Clear the entry field before inserting new text
-            self.wavelength_entry.insert(0, str(final_result))  # donne la longueur d'onde mesurée par le puissance-mètre
+            # Permet de récupérer la longueur d'onde mesurée et de l'afficher dans le champ d'entrée et de l'associer à la valeur de la longueur d'onde de l'appareil
+            self.wavelength_entry.config(state='normal')  
+            self.wavelength_entry.delete(0, tk.END)
+            self.wavelength_entry.insert(0, str(final_result))  
             self.wl = final_result
-            self.device.wavelength = final_result # ?
-            self.wavelength_entry.config(state='disabled')  # Clear the entry field before inserting new text
+            self.device.wavelength = final_result 
+            self.wavelength_entry.config(state='disabled') 
 
 
-            return final_result, incertainty, graphe, ytols
+            return final_result, incertainty, graphe, ytols  # retourner les informations voulues, dont la longueur d'onde et les incertitudes
     
 
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        # Pour le moteur
+        self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_change)
+        self.initialise = False
+
         # Bouton pour lancer les calculs
+        # Ajouter instructions au besoin
+        label = tk.Label(top_frame, text="Cliquez sur 'Lancer les calculs'", font=("Arial", 12))
+        label.grid(row=0, column=0, columnspan=1, padx=10, pady=10)
         button = tk.Button(top_frame, text="Lancer les calculs", command=on_button_click, font=("Arial", 12), bg="lightblue")
         button.grid(row=0, column=1, padx=10, pady=10)
 
@@ -326,29 +348,9 @@ class PowerMeterApp(App):
         except Exception as e:
             print(f"Erreur lors du chargement de l'image : {e}")
 
-        '''
-        try:
-            values = self.device.get_temperature_from_device()
-            im = self.ax.imshow(values[1], origin='lower', extent=(-15,15,-15,15), cmap='coolwarm')
-            self.pos_canvas = FigureCanvasTkAgg(self.fig, master=self.pos_frame)
-            self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
-            self.pos_canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
+        
 
-            self.colorbar = self.fig.colorbar(im, ax=self.ax)
-            self.colorbar.set_label("Température [°C]")
-            #self.colorbar.set_clim(vmin=self.T_ref_colorbar, vmax= np.max(values[1]))
-
-
-            self.toolbar_frame_position = tk.Frame(self.pos_frame, bg="#f0f4f8")
-            self.toolbar_frame_position.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
-            self.toolbar_position = NavigationToolbar2Tk(self.pos_canvas, self.toolbar_frame_position)
-            self.toolbar_position.update()
-            self.toolbar_position.grid(row=0, column=0, sticky="ew")
-
-        except (TypeError, AttributeError, DaqError) as e:
-            print("Le DAQ n'est pas connecté: ", e)'''
-
-        # --- Données mesurées ---
+       
         self.measurement_label = tk.Label(self.power_frame, text="--- W",
                                           font=("Segoe UI", 16, "bold"), fg="#1e3d59", bg="#f0f4f8")
         self.measurement_label.grid(row=2, column=0, pady=15, padx=5)
@@ -357,7 +359,7 @@ class PowerMeterApp(App):
                                        font=("Segoe UI", 16, "bold"), fg="#1e3d59", bg="#f0f4f8")
         self.position_label.grid(row=2, column=0, pady=15, padx=5, sticky="nsew")
 
-        # --- Frame Communication ---
+
         self.communication_frame = tk.Frame(self.tab_puissance, bg="#f0f4f8")
         self.communication_frame.grid(row=3, column=0, columnspan=3, sticky="ew", padx=10, pady=5)
 
@@ -373,7 +375,7 @@ class PowerMeterApp(App):
         
         
 
-         #TO ADD
+        
         self.wavelength_entry_label = tk.Label(self.actions_frame, text="Longueur d'onde:", font=("Segoe UI", 10), bg="#f0f4f8", fg="#2c3e50")
         self.wavelength_entry_label.grid(row=0, column=6, pady=15, padx=5, sticky="w")
 
@@ -413,24 +415,9 @@ class PowerMeterApp(App):
         self.label_com.grid( row=0, column=0, columnspan=1, padx=25, pady=10, sticky="nsew")
         #Changer la couleur du box3, ou trouver élément pour communiquer avec l'usager
         
-
-        
-
-        
-        #self.wavelength_entry = LabelledEntry("Wavelength:", character_width=6)
-        #self.wavelength_entry.grid_into(self.window, row=1, column=4, sticky="e")
-        #self.firmware_label = Label()
-        #self.firmware_label.grid_into(self.window, row=3, column=0, columnspan=3, padx=25, pady=10, sticky="w")
-        
-        
-
-        #self.device.bind_properties("wavelength", self.wavelength_entry.entry, "value_variable")
-        #self.device.bind_properties("firmware", self.firmware_label, "value_variable")
-        #self.bind_properties("is_refreshing", self.running_indicator, "value_variable")
-        #self.bind_properties("is_refreshing", self.start_button, "is_disabled") # Permet de désactiver les boutons 
-        #self.bind_properties("is_refreshing", self.wavelength_entry.entry, "is_disabled")
-        
-        #self.update_loop() # We update once at least
+    # À valider
+    #def exit_fullscreen(self, event=None):
+    #    self.root.attributes("-fullscreen", False)    
     
 
     def send_software_pwm(self, channel, page):
@@ -448,10 +435,19 @@ class PowerMeterApp(App):
                 task.write(False)
             
                 
-
+    # à vérifier
     def on_tab_change(self, event):
+        if self.initialise:
+            return
+        
         selected_tab = event.widget.select()
         tab_text = event.widget.tab(selected_tab, "text")
+
+        confirm = messagebox.askyesno("Confirmation", f"Voulez-vous vraiment passer à l'onglet '{tab_text}' ?")
+        if not confirm:
+            current_tab = event.widget.index("current")
+            event.widget.select(current_tab)
+            return
     
         if tab_text == "Longueur d'onde":
             print("Longueur d'onde sélectionnée → Servo vers 180°")
@@ -607,32 +603,38 @@ class PowerMeterApp(App):
 
 
     def update_loop(self):
-        print()
-        self.temps2 = time.time()
-        print('Temps Total:', self.temps2-self.temps1)
-        
-        self.device.update_from_device() # modif ici
-        power = self.device.power
-        z = self.device.z
-        x_peak, y_peak = z[2], z[3]
-        #thermistor_values = self.device.get_temperature_from_device() # modifier pour données en temps réel
-        #_, _2, x_peak, y_peak = self.device.get_temperature_from_device() # maybe juste self.device.temperature
-        
-        self.historique_temps_mesure.append(self.get_time())
-        self.historique_position_x.append(x_peak)      # modifier pour données en temps réel
-        self.historique_position_y.append(y_peak)        # modifier pour données en temps réel
-        self.historique_puissance.append(power)
-        #self.after(0, self.update_plot)  # Update the plot
-        self.update_plot()
+        try:
+            print()
+            self.temps2 = time.time()
+            print('Temps Total:', self.temps2-self.temps1)
+            
+            self.device.update_from_device() # modif ici
+            power = self.device.power
+            z = self.device.z
+            x_peak, y_peak = z[2], z[3]
+            #thermistor_values = self.device.get_temperature_from_device() # modifier pour données en temps réel
+            #_, _2, x_peak, y_peak = self.device.get_temperature_from_device() # maybe juste self.device.temperature
+            
+            self.historique_temps_mesure.append(self.get_time())
+            self.historique_position_x.append(x_peak)      # modifier pour données en temps réel
+            self.historique_position_y.append(y_peak)        # modifier pour données en temps réel
+            self.historique_puissance.append(power)
+            #self.after(0, self.update_plot)  # Update the plot
+            self.update_plot()
 
-        self.measurement_label.config(text=f"{power:.2f} W")
+            self.measurement_label.config(text=f"{power:.2f} W")
+            
+            self.position_label.config(text=f"(x={x_peak:.2f}, "f"y={y_peak:.2f})")
         
-        self.position_label.config(text=f"(x={x_peak:.2f}, "f"y={y_peak:.2f})")
-       
-        
-        if self.is_refreshing:
-            self.after(300, self.update_loop)   # To-Do ajouter bouton pour modifier rate
-        self.temps1 = self.temps2
+            
+            if self.is_refreshing:
+                self.after(300, self.update_loop)   # To-Do ajouter bouton pour modifier rate
+            self.temps1 = self.temps2
+
+        except DaqReadError as e:
+            messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : {str(e)}\nVeuillez vérifier la connexion USB ou le câble.")
+            print("DAQ read error occurred:", e)
+            return None
         #last_pos = data_gradient_temperature()
         #self.plot_position.append(last_pos[0], last_pos[1])
         #self.plot_position.update_plot()
@@ -761,26 +763,34 @@ class PowerMeterDevice(Bindable):
 
 
     def get_power_from_device(self):
-        self.supertest.Power_thermistor()
-        self.z = self.supertest.fitting()
-        voltage = self.supertest.liste_voltage
-        data = self.supertest.data[~np.isnan(self.supertest.data).any(axis=1)]
-        data = data.T 
-        data = data[-1]
-        
-        self.save_voltage_to_csv(voltage, data, self.supertest.liste_ref, self.supertest.liste_tension_ref)  # Save voltage values to CSV
-        self.power, self.old, self.alexis = puissance_calcul(self.supertest.data , self.supertest.liste_ref, self.old, self.alexis)
-        #print(self.wavelength)
-        self.power = corr_spectrale(self.power, self.wavelength)    # Avec corection spectrale Problème communication longeuru d'onde avec l'autre class
-        
-        return self.power
+        try:
+            self.supertest.Power_thermistor()
+            self.z = self.supertest.fitting()
+            voltage = self.supertest.liste_voltage
+            data = self.supertest.data[~np.isnan(self.supertest.data).any(axis=1)]
+            data = data.T 
+            data = data[-1]
+            
+            self.save_voltage_to_csv(voltage, data, self.supertest.liste_ref, self.supertest.liste_tension_ref)  # Save voltage values to CSV
+            self.power, self.old, self.alexis = puissance_calcul(self.supertest.data , self.supertest.liste_ref, self.old, self.alexis)
+            #print(self.wavelength)
+            self.power = corr_spectrale(self.power, self.wavelength)    # Avec corection spectrale Problème communication longeuru d'onde avec l'autre class
+            
+            return self.power
+        except DaqReadError as e:
+            messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : {str(e)}\nVeuillez vérifier la connexion USB ou le câble.")
+            print("DAQ read error occurred:", e)
+            return None
     
+
+    # À tester
     def get_temperature_from_device(self):
         # Utilise les valeurs de tension pour l'instant et non de température !
         try:
             self.supertest.Power_thermistor()
             self.z = self.supertest.fitting()
         except DaqError as e:
+            messagebox.showerror("Erreur DAQ", "Erreur de communication avec le DAQ. Vérifier la connexion.")
             print("DAQ error occurred:", e)
             return None
 
@@ -834,6 +844,7 @@ class PowerMeterDevice(Bindable):
     def update_from_device(self):
         self.get_power_from_device()
         self.get_firmware_from_device()
+        
         #self.get_temperature_from_device()
         #self.get_wavelength_from_device()
 
