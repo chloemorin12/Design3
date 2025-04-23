@@ -30,16 +30,19 @@ class Acquisition:
         self.wavelenght_tension = np.full((256, 1), np.nan)
     
     def get_active_device(self):
-        system = System.local()
-        device_names = [device.name for device in system.devices]
+        try:
+            system = System.local()
+            device_names = [device.name for device in system.devices]
 
-        if not device_names:
-            raise RuntimeError("No NI-DAQmx devices detected.")
+            if not device_names:
+                raise RuntimeError("No NI-DAQmx devices detected.")
 
-        active_device = device_names[0]
-        print(f"Using device: {active_device}")
-        return active_device
-        
+            active_device = device_names[0]
+            print(f"Using device: {active_device}")
+            return active_device
+        except RuntimeError as e:
+            print('Aucun DAQ de connecté', e)
+            
     def assign_thermistor_positions(self):
         self.data = np.full((256, 2), np.nan)
         real_thermistor_positions = [
@@ -100,7 +103,7 @@ class Acquisition:
                     self.voltage_data[i] = np.nan # retourne (x, y, voltage) pour chaucune des 61 thermistors
                     continue
                 if binary_str[-8] == '1':
-                    if self.data.shape[1]>= 102:
+                    if self.data.shape[1]>= 12:
                         self.data = np.delete(self.data, 2, axis=1)
                     self.data = np.hstack((self.data, self.voltage_data))
 
@@ -136,7 +139,6 @@ class Acquisition:
                     #temperature = steinhart_hart(voltage, A, B, C)
                     #temperature = steinhart_hart_resistance_to_temperature(resistance, [0.00088692, 0.00025122, 0.00000019716])
                     self.voltage_data[i] = temp
-                    time.sleep(0.001)
 
                     #print(self.liste_ref)
 

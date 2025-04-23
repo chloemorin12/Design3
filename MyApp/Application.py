@@ -5,7 +5,7 @@ from testChloe import data_gradient_temperature, position, puissance_calcul
 import matplotlib.pyplot as plt
 import matplotlib, sys
 matplotlib.use('TkAgg')
-
+import matplotlib.patches as patches
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from datetime import datetime
 from tkinter.messagebox import askyesnocancel
@@ -29,7 +29,6 @@ class PowerMeterApp(App):
         App.__init__(self)
         self.root.option_add("*Font", "Segoe 10")
         
-
         self.device = PowerMeterDevice()
         self.is_refreshing = False
 
@@ -39,9 +38,9 @@ class PowerMeterApp(App):
         self.historique_position_x = []
         self.historique_position_y = []
         self.wl = self.device.wavelength
-        self.T_ref_colorbar = 0 # à changer valeur minimal afficher color bar
+        self.temps1 = 0
+        self.temps2 = 0
 
-        
         self.root.title("Puissance-mètre")
 
         # Configure the root window to allow expansion
@@ -93,6 +92,7 @@ class PowerMeterApp(App):
         case1_value = tk.DoubleVar(value=1.0)  # Valeur initiale
         case2_value = tk.DoubleVar(value=1.0)
         case3_value = tk.DoubleVar(value=1.0)
+        
 
 
         # Fonction pour créer une case avec flèches
@@ -232,13 +232,14 @@ class PowerMeterApp(App):
         self.ax_puissance.set_ylim(0, 11)
         self.ax_puissance.set_ylabel('Puissance [W]')
         self.ax_puissance.set_xlabel('Tic temporel')
+        self.line_puissance, = self.ax_puissance.plot([], [], color='tab:blue', linewidth=2)
+
         self.ax_puissance.set_facecolor("#ffffff")
         self.ax_puissance.grid(True, linestyle="--", alpha=0.3)
         self.ax_puissance.set_title("Historique de Puissance", fontsize=11, color="#2c3e50")
         self.ax_puissance.tick_params(colors="#2c3e50")
         self.ax_puissance.spines['top'].set_visible(False)
         self.ax_puissance.spines['right'].set_visible(False)
-        self.ax_puissance.set_ylabel("Puissance [W]") # à revoir
 
         self.canvas = FigureCanvasTkAgg(self.plot_puissance, master=self.power_frame)
         self.canvas_widget = self.canvas.get_tk_widget()
@@ -258,14 +259,29 @@ class PowerMeterApp(App):
 
         self.fig = plt.figure(figsize=(5, 4))
         self.ax = self.fig.add_subplot(111)
-        self.ax.set_xlim(-15, 15)
-        self.ax.set_ylim(-15, 15)
-        self.ax.set_xlabel("Position X [cm]")
-        self.ax.set_ylabel("Position Y [cm]")
         self.ax.set_facecolor("#ffffff")
         self.ax.grid(True, linestyle="--", alpha=0.3)
-        self.ax.set_title("Carte de Température", fontsize=11)
+        self.ax.set_title("Position du laser", fontsize=11)
+        self.ax.set_xlim(-15, 15)
+        self.ax.set_ylim(-15, 15)
+        self.ax.set_aspect('equal', adjustable='box')
+        self.ax.set_xlabel("Position X [mm]")
+        self.ax.set_ylabel("Position Y [mm]")
+        self.pos_canvas = FigureCanvasTkAgg(self.fig, master=self.pos_frame)
+        self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
+        self.pos_canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
+        
+        sigma = 2.5
+        self.outer_circle = patches.Circle((0, 0), radius=12.5, fill=False, edgecolor='black', linewidth=2)
+        self.ax.add_patch(self.outer_circle)
 
+        # Add red circle (will move and change size)
+        self.red_circle = patches.Circle((0, 0), radius=sigma, fill=True, facecolor='red', edgecolor='black', linewidth=1)
+        self.ax.add_patch(self.red_circle)
+
+        # Add black x (initial dummy position)
+        self.cross_marker, = self.ax.plot([0], [0], 'kx', markersize=10, markeredgewidth=3)
+        '''
         try:
             values = self.device.get_temperature_from_device()
             im = self.ax.imshow(values[1], origin='lower', extent=(-15,15,-15,15), cmap='coolwarm')
@@ -285,15 +301,15 @@ class PowerMeterApp(App):
             self.toolbar_position.grid(row=0, column=0, sticky="ew")
 
         except (TypeError, AttributeError, DaqError) as e:
-            print("Le DAQ n'est pas connecté: ", e)
+            print("Le DAQ n'est pas connecté: ", e)'''
 
         # --- Données mesurées ---
         self.measurement_label = tk.Label(self.power_frame, text="--- W",
                                           font=("Segoe UI", 16, "bold"), fg="#1e3d59", bg="#f0f4f8")
         self.measurement_label.grid(row=2, column=0, pady=15, padx=5)
 
-        self.position_label = tk.Label(self.pos_frame, text="---",
-                                       font=("Segoe UI", 12, "bold"), fg="#1e3d59", bg="#f0f4f8")
+        self.position_label = tk.Label(self.pos_frame, text="x=0, y=0",
+                                       font=("Segoe UI", 16, "bold"), fg="#1e3d59", bg="#f0f4f8")
         self.position_label.grid(row=2, column=0, pady=15, padx=5, sticky="nsew")
 
         # --- Frame Communication ---
@@ -335,9 +351,6 @@ class PowerMeterApp(App):
         #self.big_font = tkFont.Font(family='Helvetica', size=size)
         #self.measurement_label = tk.Label(self.power_frame, text="--- mW") #, font=self.big_font)
         #self.measurement_label.grid(row=2, column=0, pady=15, padx=5)
-
-        self.position_label = tk.Label(self.pos_frame, text="---")
-        self.position_label.grid(row=2, column=0, pady=15, padx=5, sticky='nsew')
 
 
 
@@ -497,53 +510,68 @@ class PowerMeterApp(App):
     #    return self.device.power
     
     def update_plot(self):
-        # with plt.style.context(self.style):
-        #self.first_axis.plot(self.x, self.y, "k-")
-        self.ax_puissance.cla()  # Clears the axes
-        self.ax_puissance.plot(range(len(self.historique_temps_mesure)), self.historique_puissance)  # modifier axe des x ?
-        self.ax_puissance.set_ylim(0, 20)
-        self.ax_puissance.set_ylabel('Puissance [W]')
-        self.ax_puissance.set_xlabel('Tic temporel')
-        #if len(self.historique_puissance) > 20:
-        #    self.ax_puissance.plot(range(len(self.historique_temps_mesure[-20:])), self.historique_puissance[-20:])  # modifier axe des x ?
-        #else:
-        #    self.ax_puissance.plot(range(len(self.historique_temps_mesure)), self.historique_puissance)  # modifier axe des x ?
+        N = 100  # show only the last 100 points
+        x_data = list(range(max(0, len(self.historique_temps_mesure) - N), len(self.historique_temps_mesure)))
+        y_data = self.historique_puissance[-N:]
+        if x_data:
+            self.ax_puissance.set_xlim(min(x_data), max(x_data))
+        self.line_puissance.set_data(x_data, y_data)
+        self.ax_puissance.set_ylim(0, max(y_data) * 1.1 if y_data else 15)
         self.canvas.draw()
-        self.canvas.flush_events()
-        self.ax_puissance.set_ylabel("Puissance [W]")
 
         #Changes
-        if hasattr(self, 'colorbar') and self.colorbar:
+        '''if hasattr(self, 'colorbar') and self.colorbar:
             self.colorbar.remove() # Clears the colourbars
 
         values = self.device.z# Modifier pour 
-
         self.ax.cla()  # Clears the axes
         self.ax.set_xlim(-15, 15)
         self.ax.set_ylim(-15, 15)
-        self.ax.set_xlabel("Position X [cm]")
-        self.ax.set_ylabel("Position Y [cm]")
+        self.ax.set_xlabel("Position X [mm]")
+        self.ax.set_ylabel("Position Y [mm]")'''
         #self.ax.imshow(self.device.get_temperature_from_device()[1], origin='lower', extent=(-15, 15, -15, 15), cmap='coolwarm')
         
-        im = self.ax.imshow(values[1], origin='lower', extent=(-15,15,-15,15), cmap='coolwarm', vmin=20, vmax=60)
-        self.ax.plot(values[2], values[3], 'kx', markersize=10, markeredgewidth=3)
-        self.colorbar = self.fig.colorbar(im, ax=self.ax)
-        self.colorbar.set_label("Température [°C]") 
-        #self.colorbar.set_clim(vmin=self.T_ref_colorbar, vmax=np.max(values[1]))
-
+        
+        ##### À Enlever #######
+        '''im = self.ax.imshow(values[1], origin='lower', extent=(-15,15,-15,15), cmap='coolwarm', vmin=20, vmax=60)'''
+        ##### À Ajouter ######
+        values = self.device.z  # [params, Z_interp, x_peak, y_peak]
+        params = values[0]
+        sigma = (params[3] + params[4]) / 2
+        if sigma >= 1.5 and sigma <= 4:
+            self.red_circle.center = (values[2], values[3])
+            self.red_circle.set_radius(sigma)
+            self.red_circle.set_visible(True)
+        else:
+            self.red_circle.set_visible(False)
+        self.red_circle.center = (values[2], values[3])
+        self.red_circle.set_radius(sigma)
+        self.cross_marker.set_data([values[2]], [values[3]])
         self.pos_canvas.draw()
-        self.pos_canvas.flush_events()
+        
+        #À Enlever
+        '''
+        self.colorbar = self.fig.colorbar(im, ax=self.ax)
+        self.colorbar.set_label("Température [°C]")
+        
+        
+        self.pos_canvas.draw()
+        self.pos_canvas.flush_events()'''
 
 
 
 
     def update_loop(self):
+        print()
+        self.temps2 = time.time()
+        print('Temps Total:', self.temps2-self.temps1)
         
         self.device.update_from_device() # modif ici
         power = self.device.power
+        z = self.device.z
+        x_peak, y_peak = z[2], z[3]
         #thermistor_values = self.device.get_temperature_from_device() # modifier pour données en temps réel
-        _, _2, x_peak, y_peak = self.device.get_temperature_from_device() # maybe juste self.device.temperature
-        d = time.time()
+        #_, _2, x_peak, y_peak = self.device.get_temperature_from_device() # maybe juste self.device.temperature
         
         self.historique_temps_mesure.append(self.get_time())
         self.historique_position_x.append(x_peak)      # modifier pour données en temps réel
@@ -556,15 +584,14 @@ class PowerMeterApp(App):
         
         self.position_label.config(text=f"(x={x_peak:.2f}, "f"y={y_peak:.2f})")
        
-        f = time.time()
-        print('Temps total', f-d)
         
         if self.is_refreshing:
-            self.after(1, self.update_loop)   # To-Do ajouter bouton pour modifier rate
-
+            self.after(300, self.update_loop)   # To-Do ajouter bouton pour modifier rate
+        self.temps1 = self.temps2
         #last_pos = data_gradient_temperature()
         #self.plot_position.append(last_pos[0], last_pos[1])
         #self.plot_position.update_plot()
+        
         
     def click_save(self):
 
@@ -688,6 +715,7 @@ class PowerMeterDevice(Bindable):
 
     def get_power_from_device(self):
         self.supertest.Power_thermistor()
+        self.z = self.supertest.fitting()
         voltage = self.supertest.liste_voltage
         data = self.supertest.data[~np.isnan(self.supertest.data).any(axis=1)]
         data = data.T 
@@ -697,19 +725,19 @@ class PowerMeterDevice(Bindable):
         self.power, self.old = puissance_calcul(self.supertest.data , self.supertest.liste_ref, self.old)
         #print(self.wavelength)
         self.power = corr_spectrale(self.power, self.wavelength)    # Avec corection spectrale Problème communication longeuru d'onde avec l'autre class
-
-
-        '''
-        if self.debug:
-            #self.power = random.randrange(800,1000,1)/100
-            valeur = self.supertest.Power_thermistor()
-            self.power = valeur[0]
-            self.ref = valeur[1]
-        else:
-            pass # Update via USB
-        '''
+        
         return self.power
     
+    def get_temperature_from_device(self):
+        # Utilise les valeurs de tension pour l'instant et non de température !
+        try:
+            self.supertest.Power_thermistor()
+            self.z = self.supertest.fitting()
+        except DaqError as e:
+            print("DAQ error occurred:", e)
+            return None
+
+        return self.z
     
     
     # à valider Pour les tests préliminaires seulement
@@ -751,16 +779,6 @@ class PowerMeterDevice(Bindable):
 
         return self.dev
 
-    def get_temperature_from_device(self):
-        # Utilise les valeurs de tension pour l'instant et non de température !
-        try:
-            self.supertest.Power_thermistor()
-            self.z = self.supertest.fitting()
-        except DaqError as e:
-            print("DAQ error occurred:", e)
-            return None
-
-        return self.z
     '''
     def get_wavelength_from_device(self):
             if self.debug:
@@ -771,13 +789,10 @@ class PowerMeterDevice(Bindable):
     '''
 
     def update_from_device(self):
-        d = time.time()
         self.get_power_from_device()
         self.get_firmware_from_device()
-        self.get_temperature_from_device()
+        #self.get_temperature_from_device()
         #self.get_wavelength_from_device()
-        f = time.time()
-        print(f-d)
 
 
 
