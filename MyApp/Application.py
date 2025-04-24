@@ -80,8 +80,8 @@ class PowerMeterApp(App):
 
 
         # Disposition sur l'onglet longueur d'onde
-        top_frame = tk.Frame(self.tab_longeur_onde)
-        top_frame.grid(row=0, column=0, padx=10, pady=10, sticky="n")
+        self.top_frame = tk.Frame(self.tab_longeur_onde)
+        self.top_frame.grid(row=0, column=0, padx=10, pady=10, sticky="n")
 
         main_frame = tk.Frame(self.tab_longeur_onde)
         main_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="n")
@@ -130,11 +130,9 @@ class PowerMeterApp(App):
         # Permet d'acquisitionner pour obtenir les valeur de températures de termistance des filtres
         def change_calib():
             self.calibration = self.ST.Wavelength_thermistor()   # Va chercher les valeurs de calibration
+            messagebox.showinfo("Info", "Calibration effectuée avec succès")
             #print(self.calibration)
 
-        # Bouton 'Calibration' activer par l'utilisateur pour calibrer lorsque le laser est éteint
-        self.calib_button = tk.Button(self.tab_longeur_onde, text="Calibration", command=change_calib, font=("Arial", 12), bg="lightblue")
-        self.calib_button.grid(row=0, column=2, padx=10, pady=10)
 
         
         # Fonction qui retourne la différence enre les puissances mesurées et les puissances de calibraiton
@@ -236,10 +234,16 @@ class PowerMeterApp(App):
 
         # Bouton pour lancer les calculs
         # Ajouter instructions au besoin
-        label = tk.Label(top_frame, text="Cliquez sur 'Lancer les calculs'", font=("Arial", 12))
-        label.grid(row=0, column=0, columnspan=1, padx=10, pady=10)
-        button = tk.Button(top_frame, text="Lancer les calculs", command=on_button_click, font=("Arial", 12), bg="lightblue")
-        button.grid(row=0, column=1, padx=10, pady=10)
+        self.label = tk.Label(self.top_frame, text="2. Cliquez sur 'Lancer les calculs'", font=("Arial", 12))
+        self.label.grid(row=1, column=0, columnspan=1, padx=10, pady=10)
+        self.button = tk.Button(self.top_frame, text="Lancer les calculs", command=on_button_click, font=("Arial", 12), bg="lightblue")
+        self.button.grid(row=1, column=1, padx=10, pady=10)
+
+        # Bouton 'Calibration' activer par l'utilisateur pour calibrer lorsque le laser est éteint
+        self.label_1 = tk.Label(self.top_frame, text="1. Calibrer avant le démarrage du laser", font=("Arial", 12))
+        self.label_1.grid(row=0, column=0, columnspan=1, padx=10, pady=10)
+        self.calib_button = tk.Button(self.top_frame, text="Calibration", command=change_calib, font=("Arial", 12), bg="lightblue")
+        self.calib_button.grid(row=0, column=1, padx=10, pady=10)
 
         # Canvas pour afficher le graphique
         canvas_frame = tk.Frame(self.tab_longeur_onde)
@@ -299,6 +303,9 @@ class PowerMeterApp(App):
         self.status_light = tk.Canvas(self.actions_frame, width=24, height=24, bg='white', highlightthickness=0)
         self.light_id = self.status_light.create_oval(4, 4, 20, 20, fill="red", outline="gray")
         self.status_light.grid(row=0, column=0, padx=10, pady=15)
+
+
+
 
         try:
                 pass
@@ -541,7 +548,12 @@ class PowerMeterApp(App):
         return(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
     def click_start(self):
-
+        try:
+            pass#self.device.get_power_from_device() # À revoir
+        except DaqError as e:
+            messagebox.showerror("Erreur DAQ", 'Veuillez vérifier la connexion USB ou le câble.')
+            
+          
         if not self.is_refreshing:
             self.is_refreshing = True
             self.status_light.itemconfig(self.light_id, fill="green")
@@ -568,10 +580,6 @@ class PowerMeterApp(App):
             self.toolbar_puissance.grid_remove()
             self.notebook.forget(self.tab_longeur_onde) # PEUT ÊTRE ENLEVER *****
         else:
-            try:
-                pass
-            except DaqReadError as e:
-                messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : {str(e)}\nVeuillez vérifier la connexion USB ou le câble.")
             
             self.is_refreshing = False
             #try: 
@@ -920,6 +928,7 @@ class PowerMeterDevice(Bindable):
 
     def get_firmware_from_device(self):
         self.dev = self.supertest.daq_device
+        print(self.dev)
 
         return self.dev
 
