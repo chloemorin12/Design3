@@ -249,8 +249,8 @@ class PowerMeterApp(App):
         self.start_button.grid(row=0, column=1, pady=15, padx=5, sticky="w")
         self.misea0 = tk.Button(self.actions_frame, text="Mise à zéro", command=self.click_clear, bg="#95a5a6", fg="white", **button_cfg)
         self.misea0.grid(row=0, column=2, pady=15, padx=5)
-        self.paramètre = tk.Button(self.actions_frame, text="Paramètres", command=self.click_chose_parametres,bg="#95a5a6", fg="white", **button_cfg) # Enlever ? et plus bas *********************************
-        self.paramètre.grid(row=0, column=3, pady=15, padx=5)
+        #self.paramètre = tk.Button(self.actions_frame, text="Paramètres", command=self.click_chose_parametres,bg="#95a5a6", fg="white", **button_cfg) # Enlever ? et plus bas *********************************
+        #self.paramètre.grid(row=0, column=3, pady=15, padx=5)
         self.save_button = tk.Button(self.actions_frame, text="Enregistrer les données", command=self.click_save, bg="#95a5a6", fg="white", **button_cfg)
         self.save_button.grid(row=0, column=5, padx=10, pady=10)
         self.status_light = tk.Canvas(self.actions_frame, width=24, height=24, bg='white', highlightthickness=0)
@@ -335,8 +335,8 @@ class PowerMeterApp(App):
         self.ax.set_facecolor("#ffffff")
         self.ax.grid(True, linestyle="--", alpha=0.3)
         self.ax.set_title("Position du laser", fontsize=11)
-        self.ax.set_xlim(-15, 15)
-        self.ax.set_ylim(-15, 15)
+        self.ax.set_xlim(-12.5, 12.5)
+        self.ax.set_ylim(-12.5, 12.5)
         self.ax.set_aspect('equal', adjustable='box')
         self.ax.set_xlabel("Position X [mm]")
         self.ax.set_ylabel("Position Y [mm]")
@@ -344,13 +344,13 @@ class PowerMeterApp(App):
         self.pos_canvas_widget = self.pos_canvas.get_tk_widget()
         self.pos_canvas_widget.grid(row=0, column=0, pady=15, padx=5, sticky="nsew")
         
-        sigma = 2.5
+        #sigma = 2.5
         self.outer_circle = patches.Circle((0, 0), radius=12.5, fill=False, edgecolor='black', linewidth=2)
         self.ax.add_patch(self.outer_circle)
 
         # cercle rouge
-        self.red_circle = patches.Circle((0, 0), radius=sigma, fill=True, facecolor='red', edgecolor='black', linewidth=1)
-        self.ax.add_patch(self.red_circle)
+        #self.red_circle = patches.Circle((0, 0), radius=sigma, fill=True, facecolor='red', edgecolor='black', linewidth=1)
+        #self.ax.add_patch(self.red_circle)
 
         # symbole x pour marquer le peak
         self.cross_marker, = self.ax.plot([0], [0], 'kx', markersize=10, markeredgewidth=3)
@@ -515,7 +515,12 @@ class PowerMeterApp(App):
             
             self.is_refreshing = True
             self.status_light.itemconfig(self.light_id, fill="green")
-            self.update_loop()
+            try:
+                self.update_loop()
+            except DaqReadError as e:
+                messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : Veuillez vérifier la connexion USB ou le câble.")
+                print("DAQ read error occurred:", e)
+                return
             self.start_button.config(text="Arrêter")
             # Historique communication
             self.Évènements.append(self.get_time() + ' : '+'La prise de donnée est en cours')
@@ -528,7 +533,7 @@ class PowerMeterApp(App):
             # Protection contre l'usager qui cliquerait partout
             self.save_button.config(state='disabled')
             self.misea0.config(state='disabled')
-            self.paramètre.config(state='disabled') 
+            #self.paramètre.config(state='disabled') 
             self.wavelength_entry.config(state='disabled')
             self.wavelength_button.config(state='disabled')
             self.combobox_1.config(state='disabled')
@@ -554,7 +559,7 @@ class PowerMeterApp(App):
             # Protection contre l'usager qui cliquerait partout
             self.save_button.config(state='normal')
             self.misea0.config(state='normal')
-            self.paramètre.config(state='normal') 
+            #self.paramètre.config(state='normal') 
             self.wavelength_entry.config(state='disabled')
             self.wavelength_button.config(state='normal')
             self.combobox_1.config(state='readonly')
@@ -603,84 +608,89 @@ class PowerMeterApp(App):
         # Visuel du graphique de position
         values = self.device.z  # [params, Z_interp, x_peak, y_peak]
         params = values[0]
-        sigma = (params[3] + params[4]) / 2
+        if hasattr(self, 'colorbar') and self.colorbar:
+            self.colorbar.remove() # Clears the colourbars
 
-        if sigma >= 1.5 and sigma <= 4:
-            self.red_circle.center = (values[2], values[3])
-            self.red_circle.set_radius(sigma)
-            self.red_circle.set_visible(True)
-        else:
-            self.red_circle.set_visible(False)
-        self.red_circle.center = (values[2], values[3])
-        self.red_circle.set_radius(sigma)
+        sigma_x, sigma_y = params[3], params[4]
+        print(sigma_x, sigma_y)
+
+        if sigma_x > 6 or sigma_x < 0.5 or sigma_y > 6 or sigma_y < 0.5:
+            self.device.power = 0
+
+        values = self.device.z# Modifier pour 
+        self.ax.cla()  # Clears the axes
+        self.ax.set_xlim(-12.5, 12.5)
+        self.ax.set_ylim(-12.5, 12.5)
+        self.ax.set_xlabel("Position X [mm]")
+        self.ax.set_ylabel("Position Y [mm]")
+        im = self.ax.imshow(values[1], origin='lower', extent=(-12.5,12.5,-12.5,12.5), cmap='coolwarm')
+        self.colorbar = self.fig.colorbar(im, ax=self.ax)
+        self.colorbar.set_label("Température [°C]")
         self.cross_marker.set_data([values[2]], [values[3]])
-        if self.device.power < 0.5:
-            self.red_circle.set_visible(False)
-            self.cross_marker.set_visible(False)
-            self.position_label.config(text="Pas de laser détecté")
         self.pos_canvas.draw()
+        self.pos_canvas.flush_events()
 
 
     # Boucle utiliser lors de l'aquisition pour récolter les données et faire les mesures
 
     def update_loop(self):
         try:
-        
-            self.initialise = False
-            print()
-            self.temps2 = time.time()
-            print('Temps Total:', self.temps2-self.temps1)
-            
-            self.device.update_from_device() # modif ici
-            power = self.device.power
-            z = self.device.z
-            x_peak, y_peak = z[2], z[3]
-            
-            self.historique_temps_mesure.append(self.get_time())
-            self.historique_position_x.append(x_peak)      
-            self.historique_position_y.append(y_peak)        
-            self.historique_puissance.append(power)
-            self.position_label.config(text=f"(x={x_peak:.2f}, "f"y={y_peak:.2f})")
-            self.update_plot()
-
-            self.measurement_label.config(text=f"{power:.2f} W")
-            
-            
-    
-            if self.is_refreshing:
-                self.after(300, self.update_loop)   # To-Do ajouter bouton pour modifier rate
-            self.temps1 = self.temps2
-
+            self.device.update_from_device() 
         # cas d'erreur au cas ou le fil est débrancher durant l'aquisition
         except DaqReadError as e:
             messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : Veuillez vérifier la connexion USB ou le câble.")
             print("DAQ read error occurred:", e)
-            self.is_refreshing = False
-            #try: 
-            #    pass
-            #except DaqReadError as e:
-            #    messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : {str(e)}\nVeuillez vérifier la connexion USB ou le câble.")
-                
+            #self.is_refreshing = False
+            
             self.status_light.itemconfig(self.light_id, fill="red")
             self.start_button.config(text="Démarrer")
             
             # Historique communication
             self.Évènements.append(self.get_time()+ ' : '+'La prise de donnée est mise en pause')
-            #self.label_com.value_variable.set(self.get_time()+ ' : '+'La prise de donnée est mise en pause')
             self.label_com.config(text=self.Évènements[len(self.Évènements)-1]
-                                          + '\n' + self.Évènements[len(self.Évènements)-2]
+                                         + '\n' + self.Évènements[len(self.Évènements)-2]
                                           + '\n' + self.Évènements[len(self.Évènements)-3]
                                           + '\n' + self.Évènements[len(self.Évènements)-4]
                                           + '\n' + self.Évènements[len(self.Évènements)-5]) 
             self.save_button.config(state='normal')
             self.misea0.config(state='normal')
-            self.paramètre.config(state='normal') 
-            self.wavelength_entry.config(state='normal')
+            self.wavelength_entry.config(state='disabled')
             self.wavelength_button.config(state='normal')
             self.combobox_1.config(state='readonly')               #    ***********************************  à Valider
             self.wavelength_entry_label.config(state='normal')
             self.wavelength_button_1.config(state='normal')
             return None
+
+        self.initialise = False
+        print()
+        self.temps2 = time.time()
+        print('Temps Total:', self.temps2-self.temps1)
+        
+        # modif ici
+        power = self.device.power
+        z = self.device.z
+        x_peak, y_peak = z[2], z[3]
+        
+        self.historique_temps_mesure.append(self.get_time())
+        self.historique_position_x.append(x_peak)      
+        self.historique_position_y.append(y_peak)        
+        self.historique_puissance.append(power)
+        if len(self.historique_position_x) >=3:
+            x_peak, y_peak = np.mean([self.historique_position_x[-1],self.historique_position_x[-2], self.historique_position_x[-3]]), np.mean([self.historique_position_y[-1],self.historique_position_y[-2], self.historique_position_y[-3]])
+        self.position_label.config(text=f"(x={x_peak:.1f}, "f"y={y_peak:.1f})")
+        self.update_plot()
+
+        self.measurement_label.config(text=f"{self.device.power:.2f} W")
+        
+        
+
+        if self.is_refreshing:
+            self.after(300, self.update_loop)   # To-Do ajouter bouton pour modifier rate
+        self.temps1 = self.temps2
+
+    
+    
+    
         
 
     # fonction qui permet d'enregistrer le temps, la puissance, la position et la longueur d'onde de cahque aquisition

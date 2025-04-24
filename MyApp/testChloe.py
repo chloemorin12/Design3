@@ -55,10 +55,21 @@ def inverse_transfer_function( Gain, w_n, z):
 
 
 
-
+def puissance_calcul(data, ref, old):
+    ref = [ref[1], ref[2]]
+    ref = np.mean(ref)
+    
+    data = data[~np.isnan(data).any(axis=1)] # tension values 
+    data = data.T 
+    #print(data[-1])
+    T_max = np.max(data[-1])   
+    T_average = np.mean([T_max, old])
+    old = T_max
+    P_t = 0.0077*T_average**2 - 0.3708*T_average + 4.4904
+    return P_t, old
 
 # paramètre de la fonction de transfert (2e ordre)
-
+'''
 def puissance_calcul(data, ref, old):
     inital_data_t_1 = [0]*53
     inital_data_t_2 = [0]*53
@@ -113,7 +124,7 @@ def puissance_calcul(data, ref, old):
     P_t = c_0*T_k + c_1*T_k_1 + c_2*T_k_2  
 
     return P_t, old
-'''
+
 
 # VERSION AVEC PRÉDICTION
 rechauffement, refroidissement = True, False
