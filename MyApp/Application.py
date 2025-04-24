@@ -528,19 +528,16 @@ class PowerMeterApp(App):
             return False
         if selected_value == "Sélectionnez une option":
             messagebox.showerror("Erreur", "Veuillez sélectionner une option de port de connection valide.")
-            a = self.show_combobox_popup()
+            self.show_combobox_popup()
             #highlight_combobox(self.combobox)
             #self.combobox.configure(style="Highlight.TCombobox")
             #style = ttk.Style()
             #style.configure("Highlight.TCombobox", fieldbackground="yellow", bordercolor="red", borderwidth=2)
-            self.is_refreshing = False
-            self.status_light.itemconfig(self.light_id, fill="red")
-            self.start_button.config(text="Démarrer")
+            
+            return True
+           
 
-
-            return False
-
-        return True
+        return False # on l'utilise pas
     
 
 
@@ -634,8 +631,16 @@ class PowerMeterApp(App):
         except DaqError as e:
             messagebox.showerror("Erreur DAQ", 'Veuillez vérifier la connexion USB ou le câble.')
             
-          
+        try:
+            a = self.on_combo_validation()
+        except:
+            pass
+
+        if a == True:
+            self.is_refreshing = True
+        
         if not self.is_refreshing:
+            
             self.is_refreshing = True
             self.status_light.itemconfig(self.light_id, fill="green")
             self.update_loop()
@@ -655,7 +660,7 @@ class PowerMeterApp(App):
             self.paramètre.config(state='disabled') 
             self.wavelength_entry.config(state='disabled')
             self.wavelength_button.config(state='disabled')
-            self.connexion.config(state='disabled')
+            self.combobox_1.config(state='disabled')
             self.wavelength_entry_label.config(state='disabled')
             self.wavelength_button_1.config(state='disabled')
             self.toolbar_puissance.grid_remove()
@@ -685,7 +690,7 @@ class PowerMeterApp(App):
             self.paramètre.config(state='normal') 
             self.wavelength_entry.config(state='disabled')
             self.wavelength_button.config(state='normal')
-            self.connexion.config(state='normal')
+            self.combobox_1.config(state='readonly')
             self.wavelength_entry_label.config(state='normal')
             self.wavelength_button_1.config(state='normal')
             self.toolbar_puissance.grid()
@@ -761,7 +766,7 @@ class PowerMeterApp(App):
 
     def update_loop(self):
         try:
-            self.on_combo_validation()
+        
             self.initialise = False
             print()
             self.temps2 = time.time()
@@ -949,6 +954,7 @@ class PowerMeterDevice(Bindable):
             
             self.save_voltage_to_csv(voltage, data, self.supertest.liste_ref, self.supertest.liste_tension_ref)  # Save voltage values to CSV
             self.power, self.old = puissance_calcul(self.supertest.data , self.supertest.liste_ref, self.old)
+            #self.power, self.old , self.alexis = puissance_calcul(self.supertest.data , self.supertest.liste_ref, self.old, self.alexis)
             #print(self.wavelength)
             self.power = corr_spectrale(self.power, self.wavelength)    # Avec corection spectrale Problème communication longeuru d'onde avec l'autre class
             

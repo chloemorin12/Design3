@@ -113,12 +113,11 @@ def puissance_calcul(data, ref, old):
     P_t = c_0*T_k + c_1*T_k_1 + c_2*T_k_2  
 
     return P_t, old
-
-
+'''
 
 # VERSION AVEC PRÉDICTION
 rechauffement, refroidissement = True, False
-'''
+
 def puissance_calcul(data, ref, old, alexis):
     global rechauffement, refroidissement
     ref = [ref[1], ref[2]]
@@ -192,10 +191,9 @@ def puissance_calcul(data, ref, old, alexis):
 
     P_t = (1 - poid) * P_ch + poid * P_r
     return P_t, old, alexis
+
+
 '''
-
-
-
 
 
 
