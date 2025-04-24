@@ -123,7 +123,11 @@ class PowerMeterApp(App):
 
         # Permet d'acquisitionner pour obtenir les valeur de températures de termistance des filtres
         def change_calib():
-            self.calibration = self.ST.Wavelength_thermistor(self.device.dev)   # Va chercher les valeurs de calibration
+            try:
+                self.calibration = self.ST.Wavelength_thermistor(self.device.dev)   # Va chercher les valeurs de calibration
+            except DaqError as e:
+                messagebox.showerror("Erreur DAQ", 'Veuillez vérifier la connexion USB ou le câble.')
+                return
             messagebox.showinfo("Info", "Calibration effectuée avec succès")
             #print(self.calibration)
 
@@ -140,6 +144,12 @@ class PowerMeterApp(App):
         # Fonction pour calculer la longueur d'onde lorsque l'utilisateur clique sur le bouton 'Cliquez sur 'Lancer les calculs'
         def on_button_click():
 
+            try:
+                T_now = self.ST.Wavelength_thermistor(self.device.dev)
+            except DaqError as e:
+                messagebox.showerror("Erreur DAQ", 'Veuillez vérifier la connexion USB ou le câble.')
+                return
+            
             # Créer une fenêtre modale pour afficher le message "Calcul en cours..."
             progress_window = tk.Toplevel(self.root)
             progress_window.title("Calcul en cours")
@@ -163,9 +173,9 @@ class PowerMeterApp(App):
             # Forcer l'affichage de la fenêtre avant de commencer le calcul
             self.root.update()
 
+            
 
-
-            T_now = self.ST.Wavelength_thermistor(self.device.dev)
+            #T_now = self.ST.Wavelength_thermistor(self.device.dev)
             Powers = wl_power(self.calibration, T_now)
             #print(Powers)
             iterations = 0
@@ -484,7 +494,7 @@ class PowerMeterApp(App):
                 
 
         if tab_text == "Longueur d'onde":
-            print("Longueur d'onde sélectionnée → Servo vers 180°")
+            print("Longueur d'onde sélectionnée → Servo vers 180°", print(self.device.get_firmware_from_device()))
             self.send_software_pwm(channel=f"{self.device.get_firmware_from_device()}/port1/line0", page = 'Wavelenght')  # ≈ 180°
         elif tab_text == "Puissance":
             print("Puissance sélectionnée → Servo vers 0°")
