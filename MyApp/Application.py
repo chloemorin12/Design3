@@ -33,7 +33,7 @@ class PowerMeterApp(App):
         self.root.configure(bg="#f0f4f8")
         self.device = PowerMeterDevice()
         self.is_refreshing = False
-        self.initialise = True
+        self.initialise = False
 
         self.ct = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.historique_puissance = []
@@ -43,7 +43,9 @@ class PowerMeterApp(App):
         self.wl = self.device.wavelength
         self.temps1 = 0
         self.temps2 = 0
+        self.current_tab_index = 0
 
+        
         
         self.root.title("Puissance-mètre")
 
@@ -72,6 +74,8 @@ class PowerMeterApp(App):
         self.notebook.add(self.tab_longeur_onde, text="Longueur d'onde")
         self.tab_longeur_onde.grid_rowconfigure(0, weight=1)   
         self.tab_longeur_onde.grid_columnconfigure(0, weight=1)  
+
+
 
 
 
@@ -143,6 +147,32 @@ class PowerMeterApp(App):
 
         # Fonction pour calculer la longueur d'onde lorsque l'utilisateur clique sur le bouton 'Cliquez sur 'Lancer les calculs'
         def on_button_click():
+
+            # Créer une fenêtre modale pour afficher le message "Calcul en cours..."
+            progress_window = tk.Toplevel(self.root)
+            progress_window.title("Calcul en cours")
+
+            progress_window.resizable(False, False)
+            progress_window.transient(self.root)  # Associer la fenêtre modale à la fenêtre principale
+            progress_window.grab_set()  # Rendre la fenêtre modale
+            window_width = 300
+            window_height = 100
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
+            position_x = (screen_width // 2) - (window_width // 2)
+            position_y = (screen_height // 2) - (window_height // 2)
+            progress_window.geometry(f"{window_width}x{window_height}+{position_x}+{position_y}")
+
+
+            # Ajouter un label pour afficher le message
+            progress_label = tk.Label(progress_window, text="Calcul de la longueur d'onde en cours...", font=("Arial", 12))
+            progress_label.pack(pady=20)
+
+            # Forcer l'affichage de la fenêtre avant de commencer le calcul
+            self.root.update()
+
+
+
             T_now = self.ST.Wavelength_thermistor()
             Powers = wl_power(self.calibration, T_now)
             #print(Powers)
@@ -152,9 +182,11 @@ class PowerMeterApp(App):
             while wavelength_calculator(Powers, ytols, canvas_frame, result_value_label) == 0 and iterations < 99:
                 ytols+=1
                 iterations += 1
+                #messagebox.showinfo("Info", "Calcul de la longueur d'onde en cours...")
+                self.root.update()
                 if wavelength_calculator(Powers, ytols, canvas_frame, result_value_label) != 0 or iterations == 98:
                     break
-            
+            progress_window.destroy()  # Fermer la fenêtre modale après le calcul
             case1_value.set(ytols[0])
             case2_value.set(ytols[1])
             case3_value.set(ytols[2])
@@ -268,6 +300,11 @@ class PowerMeterApp(App):
         self.light_id = self.status_light.create_oval(4, 4, 20, 20, fill="red", outline="gray")
         self.status_light.grid(row=0, column=0, padx=10, pady=15)
 
+        try:
+                pass
+        except DaqReadError as e:
+                messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : {str(e)}\nVeuillez vérifier la connexion USB ou le câble.")
+            
 
         # --- Graphique de puissance ---
         self.graphs_frame = tk.Frame(self.tab_puissance, bg="#f0f4f8")
@@ -369,12 +406,14 @@ class PowerMeterApp(App):
                                              bg="#f0f4f8", fg="#2c3e50", font=("Segoe UI", 10, "bold"), bd=1, relief="solid")
         self.com_label_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
 
-        self.label_com = tk.Label(self.com_label_frame, text="Démarrage Interface",
-                                  font=("Segoe UI", 9), bg="#f0f4f8", fg="#2c3e50", justify="left")
-        self.label_com.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
+
+        #self.label_com = tk.Label(self.com_label_frame, text="Démarrage Interface", font=("Segoe UI", 9), bg="#f0f4f8", fg="#2c3e50", justify="left")
+        #self.label_com.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
 
 
-        
+        self.Évènements.append(self.get_time() + ' : ' + 'Démarrage Interface')
+        self.label_com = tk.Label(self.com_label_frame, text=self.get_time() + ' : ' + 'Démarrage Interface', font=("Segoe UI", 9), bg="#f0f4f8", fg="#2c3e50", justify="left")
+        self.label_com.grid( row=0, column=0, columnspan=1, padx=25, pady=10, sticky="nsew")
         
 
         
@@ -408,15 +447,13 @@ class PowerMeterApp(App):
         self.communication_frame.grid(row=3, column=0, columnspan=3, sticky="ew", padx=10, pady=5)
 
         # GRaphique de puissance
-        self.com_label_frame = tk.LabelFrame(self.communication_frame, text="Communication")
-        self.com_label_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+        #self.com_label_frame = tk.LabelFrame(self.communication_frame, text="Communication")
+        #self.com_label_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
 
         # Communication
-        self.Évènements.append(self.get_time() + ' : ' + 'Démarrage Interface')
-        self.label_com = tk.Label(self.com_label_frame, text=self.get_time() + ' : ' + 'Démarrage Interface')
-        self.label_com.grid( row=0, column=0, columnspan=1, padx=25, pady=10, sticky="nsew")
-        #Changer la couleur du box3, ou trouver élément pour communiquer avec l'usager
         
+        #Changer la couleur du box3, ou trouver élément pour communiquer avec l'usager
+        #self.initialise = False
     # À valider
     #def exit_fullscreen(self, event=None):
     #    self.root.attributes("-fullscreen", False)    
@@ -439,6 +476,37 @@ class PowerMeterApp(App):
                 
     # à vérifier
     def on_tab_change(self, event):
+        
+        notebook = event.widget
+
+        new_tab_index = notebook.index(notebook.select())
+        tab_text =  notebook.tab(new_tab_index, "text")
+
+        if new_tab_index != self.current_tab_index:
+            tab_text = notebook.tab(new_tab_index, "text")
+            confirm = messagebox.askyesno("Confirmation", f"Voulez-vous vraiment passer à l'onglet '{tab_text}' ?")
+
+            if not confirm:
+                # Prevent tab switching by re-selecting the current tab
+                notebook.select(self.current_tab_index)
+                tab_text = notebook.tab(self.current_tab_index, "text")
+            else:
+                # Update the current tab index if the user confirms
+                self.current_tab_index = new_tab_index
+                
+
+        if tab_text == "Longueur d'onde":
+            print("Longueur d'onde sélectionnée → Servo vers 180°")
+            self.send_software_pwm(channel=f"{self.device.get_firmware_from_device()}/port1/line0", page = 'Wavelenght')  # ≈ 180°
+        elif tab_text == "Puissance":
+            print("Puissance sélectionnée → Servo vers 0°")
+            self.send_software_pwm(channel=f"{self.device.get_firmware_from_device()}/port1/line1", page = 'Power')  # Retour à 0°
+        
+
+
+
+        '''
+
         if self.initialise:
             return
 
@@ -447,10 +515,17 @@ class PowerMeterApp(App):
 
         
         confirm = messagebox.askyesno("Confirmation", f"Voulez-vous vraiment passer à l'onglet '{tab_text}' ?")
+        print(confirm)
         if not confirm:
+            print("Changement d'onglet annulé.")
          # Prevent tab switching by re-selecting the current tab
+            #current = self.notebook.index("current")
             current_tab = event.widget.index("current")
-            event.widget.select(current_tab)
+            print(current_tab)
+            #event.widget.tab(self.previous_tab, text=self.previous_tab_text)  # Restore the previous tab text
+            selected_tab = event.widget.select(current_tab)
+
+            print(event.widget.tab(selected_tab, 'text'))
             return
     
         if tab_text == "Longueur d'onde":
@@ -459,7 +534,8 @@ class PowerMeterApp(App):
         elif tab_text == "Puissance":
             #print("Puissance sélectionnée → Servo vers 0°")
             self.send_software_pwm(channel=f"{self.device.get_firmware_from_device()}/port1/line1", page = 'Power')  # Retour à 0°
-    
+        
+        '''
 
     def get_time(self):
         return(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
@@ -488,7 +564,9 @@ class PowerMeterApp(App):
             self.wavelength_button.config(state='disabled')
             self.connexion.config(state='disabled')
             self.wavelength_entry_label.config(state='disabled')
-            self.wavelength_button_1.config(state='disabled')            
+            self.wavelength_button_1.config(state='disabled')
+            self.toolbar_puissance.grid_remove()
+            self.notebook.forget(self.tab_longeur_onde) # PEUT ÊTRE ENLEVER *****
         else:
             try:
                 pass
@@ -516,24 +594,14 @@ class PowerMeterApp(App):
             self.save_button.config(state='normal')
             self.misea0.config(state='normal')
             self.paramètre.config(state='normal') 
-            self.wavelength_entry.config(state='normal')
+            self.wavelength_entry.config(state='disabled')
             self.wavelength_button.config(state='normal')
             self.connexion.config(state='normal')
             self.wavelength_entry_label.config(state='normal')
             self.wavelength_button_1.config(state='normal')
+            self.toolbar_puissance.grid()
+            self.notebook.add(self.tab_longeur_onde, text="Longueur d'onde") # PEUT ÊTRE ENLEVER	*****
 
-    #def communication(self, étape):
-    #    if étape == 'start':
-    #        print('Démarrage')
-
-    '''
-    def window_size(self):
-        w = Tk()
-        w.attributes('-fullscreen', True)
-        size = (w.winfo_screenmmwidth(), w.winfo_screenmmheight())
-        w.quit()
-        print(size)
-    '''
 
 
     def click_chose_parametres(self): 
@@ -598,15 +666,6 @@ class PowerMeterApp(App):
             self.cross_marker.set_visible(False)
             self.position_label.config(text="Pas de laser détecté")
         self.pos_canvas.draw()
-        
-        #À Enlever
-        '''
-        self.colorbar = self.fig.colorbar(im, ax=self.ax)
-        self.colorbar.set_label("Température [°C]")
-        
-        
-        self.pos_canvas.draw()
-        self.pos_canvas.flush_events()'''
 
 
 
@@ -671,9 +730,6 @@ class PowerMeterApp(App):
             self.wavelength_entry_label.config(state='normal')
             self.wavelength_button_1.config(state='normal')
             return None
-        #last_pos = data_gradient_temperature()
-        #self.plot_position.append(last_pos[0], last_pos[1])
-        #self.plot_position.update_plot()
         
         
     def click_save(self):
@@ -690,7 +746,7 @@ class PowerMeterApp(App):
                 for i in range(len(self.historique_puissance)):
                     file.write((str(self.historique_temps_mesure[i]) + ' ' + str(self.historique_puissance[i])) + ' ' + str(self.historique_position_x[i]) +  ' ' +str(self.historique_position_y[i]) +' '+ str(self.device.wavelength) +' '+ '\n')
             
-            pass # Do something with x,
+            pass 
 
         # Historique des actions à enregistrer dans un fichier
         filepath_action = filepath + '_actions'
@@ -743,7 +799,7 @@ class PowerMeterApp(App):
                                           + '\n' + self.Évènements[len(self.Évènements)-3]
                                           + '\n' + self.Évènements[len(self.Évènements)-4]
                                           + '\n' + self.Évènements[len(self.Évènements)-5]) 
-            #self.save()  # Call the save method (to be implemented in the derived class)
+            
         elif click is False:  # User clicked "No"
             pass
 
@@ -773,12 +829,6 @@ class PowerMeterDevice(Bindable):
         self.supertest.assign_thermistor_positions()
         #print(self.supertest.data)
 
-        """
-        The variables are refreshed by get_xxx commands, which 
-        fetch the actual values from the device.
-        The variables represent the latest values at all times
-        and can be used direectly by the app.
-        """
         self.power = 404
         self.wavelength = 976 
         #self.firmware = None
@@ -787,7 +837,7 @@ class PowerMeterDevice(Bindable):
         self.alexis = 0
         self.z = None 
         self.dev = None 
-        self.calibration = [0,0,0,0]
+        self.calibration = [20,20,20,20]
         
 
 
