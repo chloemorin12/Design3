@@ -129,7 +129,7 @@ class PowerMeterApp(App):
 
         # Permet d'acquisitionner pour obtenir les valeur de températures de termistance des filtres
         def change_calib():
-            self.calibration = self.ST.Wavelength_thermistor()   # Va chercher les valeurs de calibration
+            self.calibration = self.ST.Wavelength_thermistor(self.device.dev)   # Va chercher les valeurs de calibration
             messagebox.showinfo("Info", "Calibration effectuée avec succès")
             #print(self.calibration)
 
@@ -171,7 +171,7 @@ class PowerMeterApp(App):
 
 
 
-            T_now = self.ST.Wavelength_thermistor()
+            T_now = self.ST.Wavelength_thermistor(self.device.dev)
             Powers = wl_power(self.calibration, T_now)
             #print(Powers)
             iterations = 0
@@ -292,9 +292,7 @@ class PowerMeterApp(App):
                                    bg="#95a5a6", fg="white", **button_cfg)
         self.paramètre.grid(row=0, column=3, pady=15, padx=5)
 
-        self.connexion = tk.Button(self.actions_frame, text="Connexion",
-                                   bg="#95a5a6", fg="white", **button_cfg)
-        self.connexion.grid(row=0, column=4, pady=15, padx=5)
+
 
         self.save_button = tk.Button(self.actions_frame, text="Enregistrer les données", command=self.click_save,
                                      bg="#95a5a6", fg="white", **button_cfg)
@@ -303,8 +301,26 @@ class PowerMeterApp(App):
         self.status_light = tk.Canvas(self.actions_frame, width=24, height=24, bg='white', highlightthickness=0)
         self.light_id = self.status_light.create_oval(4, 4, 20, 20, fill="red", outline="gray")
         self.status_light.grid(row=0, column=0, padx=10, pady=15)
+        
+
+        #self.connexion = tk.Button(self.actions_frame, text="Connexion", bg="#95a5a6", fg="white", **button_cfg)
+        #self.connexion.grid(row=0, column=4, pady=15, padx=5)
 
 
+        # Liste options
+        self.pratique_connect = self.device.get_firmware_from_device()
+        print(self.pratique_connect)
+
+
+        # Create the Combobox
+        self.combobox_1 = ttk.Combobox(self.actions_frame, values=self.pratique_connect, state="readonly", font=("Segoe UI", 10))
+        self.combobox_1.grid(row=0, column=10, pady=15, padx=5, sticky="w")
+
+        # Set a default value (optional)
+        self.combobox_1.set("Sélectionnez une option")
+
+        # Bind an event to handle selection changes
+        self.combobox_1.bind("<<ComboboxSelected>>", self.on_combobox_select)
 
 
         try:
@@ -465,7 +481,72 @@ class PowerMeterApp(App):
     #def exit_fullscreen(self, event=None):
     #    self.root.attributes("-fullscreen", False)    
     
+    def on_combobox_select(self, event):
+            selected_value = self.combobox_1.get()
+            print(f"Selected value: {selected_value}")
+            # Perform actions based on the selected value
+            self.Évènements.append(self.get_time() + f" : Option sélectionnée : {selected_value}")
+            self.label_com.config(text=self.Évènements[len(self.Évènements)-1]
+                                + '\n' + self.Évènements[len(self.Évènements)-2]
+                                + '\n' + self.Évènements[len(self.Évènements)-3]
+                                + '\n' + self.Évènements[len(self.Évènements)-4]
+                                + '\n' + self.Évènements[len(self.Évènements)-5])
+    def show_combobox_popup(self):
+    # Create a popup window
+        popup = tk.Toplevel(self.root)
+        popup.title("Sélectionnez une option")
+        popup.geometry("300x150")
+        popup.transient(self.root)  # Associate the popup with the main window
+        popup.grab_set()  # Make the popup modal
 
+        # Add a label
+        label = tk.Label(popup, text="Veuillez sélectionner une option :", font=("Segoe UI", 10))
+        label.pack(pady=10)
+
+        # Add the Combobox
+        combobox = ttk.Combobox(popup, values=self.pratique_connect, state="readonly", font=("Segoe UI", 10))
+        combobox.pack(pady=10)
+        combobox.set("Sélectionnez une option")
+
+        
+        def confirm_selection(event):
+            selected_value = combobox.get()
+            if selected_value != "Sélectionnez une option":
+                self.combobox_1.set(selected_value)  # Update the main Combobox
+                popup.destroy()  # Close the popup
+
+        combobox.bind("<<ComboboxSelected>>", confirm_selection)
+
+
+
+
+    def on_combo_validation(self):
+        try:
+            selected_value = self.combobox_1.get()
+        except DaqError as e:
+            messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : {str(e)}\nVeuillez vérifier la connexion USB ou le câble.")
+            return False
+        if selected_value == "Sélectionnez une option":
+            messagebox.showerror("Erreur", "Veuillez sélectionner une option de port de connection valide.")
+            a = self.show_combobox_popup()
+            #highlight_combobox(self.combobox)
+            #self.combobox.configure(style="Highlight.TCombobox")
+            #style = ttk.Style()
+            #style.configure("Highlight.TCombobox", fieldbackground="yellow", bordercolor="red", borderwidth=2)
+            self.is_refreshing = False
+            self.status_light.itemconfig(self.light_id, fill="red")
+            self.start_button.config(text="Démarrer")
+
+
+            return False
+
+        return True
+    
+
+
+    
+    
+            
     def send_software_pwm(self, channel, page):
         if page == 'Wavelenght':
             with nidaqmx.Task() as task:
@@ -549,7 +630,7 @@ class PowerMeterApp(App):
 
     def click_start(self):
         try:
-            pass#self.device.get_power_from_device() # À revoir
+            self.device.get_power_from_device() # À revoir
         except DaqError as e:
             messagebox.showerror("Erreur DAQ", 'Veuillez vérifier la connexion USB ou le câble.')
             
@@ -581,12 +662,12 @@ class PowerMeterApp(App):
             self.notebook.forget(self.tab_longeur_onde) # PEUT ÊTRE ENLEVER *****
         else:
             
-            self.is_refreshing = False
+            
             #try: 
             #    pass
             #except DaqReadError as e:
             #    messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : {str(e)}\nVeuillez vérifier la connexion USB ou le câble.")
-                
+            self.is_refreshing = False
             self.status_light.itemconfig(self.light_id, fill="red")
             self.start_button.config(text="Démarrer")
 
@@ -680,6 +761,7 @@ class PowerMeterApp(App):
 
     def update_loop(self):
         try:
+            self.on_combo_validation()
             self.initialise = False
             print()
             self.temps2 = time.time()
@@ -710,7 +792,7 @@ class PowerMeterApp(App):
             self.temps1 = self.temps2
 
         except DaqReadError as e:
-            messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : {str(e)}\nVeuillez vérifier la connexion USB ou le câble.")
+            messagebox.showerror("Erreur DAQ", f"Erreur de lecture DAQ : Veuillez vérifier la connexion USB ou le câble.")
             print("DAQ read error occurred:", e)
             self.is_refreshing = False
             #try: 
@@ -844,7 +926,7 @@ class PowerMeterDevice(Bindable):
         self.temperature = []
         self.alexis = 0
         self.z = None 
-        self.dev = None 
+        self.dev = self.supertest.daq_device
         self.calibration = [20,20,20,20]
         
 
@@ -858,7 +940,7 @@ class PowerMeterDevice(Bindable):
 
     def get_power_from_device(self):
         #try:
-            self.supertest.Power_thermistor()
+            self.supertest.Power_thermistor(self.dev)
             self.z = self.supertest.fitting()
             voltage = self.supertest.liste_voltage
             data = self.supertest.data[~np.isnan(self.supertest.data).any(axis=1)]
@@ -881,7 +963,7 @@ class PowerMeterDevice(Bindable):
     def get_temperature_from_device(self):
         # Utilise les valeurs de tension pour l'instant et non de température !
         #try:
-            self.supertest.Power_thermistor()
+            self.supertest.Power_thermistor(self.device.dev)
             self.z = self.supertest.fitting()
             return self.z
         #except DaqError as e:

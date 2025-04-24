@@ -22,7 +22,7 @@ class Acquisition:
         self.sample_rate = 10000
         self.samples_to_read = int(duration * self.sample_rate)
         self.previous_params = None  # Store the last successful parameters
-        self.daq_device = self.get_active_device()
+        self.daq_device = self.get_active_device()[0]  # enlever plus tard
 
 
         self.liste_tension = []
@@ -37,9 +37,10 @@ class Acquisition:
             if not device_names:
                 raise RuntimeError("No NI-DAQmx devices detected.")
 
-            active_device = device_names[0]
-            print(f"Using device: {active_device}")
-            return active_device
+            return device_names
+            #active_device = device_names[0]
+            #print(f"Using device: {active_device}")
+            #return active_device
         except RuntimeError as e:
             print('Aucun DAQ de connecté', e)
             
@@ -79,7 +80,7 @@ class Acquisition:
     
     
 
-    def Power_thermistor(self):
+    def Power_thermistor(self, daq):
         start_time = time.perf_counter()
         self.liste_voltage = []
         self.liste_ref = []
@@ -89,8 +90,8 @@ class Acquisition:
         coeffs = np.polyfit(voltages, temperatures, deg=1)
         poly_func = np.poly1d(coeffs)
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
-            do_task.do_channels.add_do_chan(f"{self.daq_device}/port0/line0:7") 
-            ai_task.ai_channels.add_ai_voltage_chan(f"{self.daq_device}/ai7")
+            do_task.do_channels.add_do_chan(f"{daq}/port0/line0:7") 
+            ai_task.ai_channels.add_ai_voltage_chan(f"{daq}/ai7")
             ai_task.timing.cfg_samp_clk_timing(
                 rate=self.sample_rate,
                 sample_mode=AcquisitionType.FINITE,
@@ -153,15 +154,15 @@ class Acquisition:
                 
             
                 
-    def Wavelength_thermistor(self):
+    def Wavelength_thermistor(self,daq):
         temp = []
         voltages = np.array([0.02, 3.11, 4.5])
         temperatures = np.array([22, 32,50])  
         coeffs = np.polyfit(voltages, temperatures, deg=1)
         poly_func = np.poly1d(coeffs)
         with nidaqmx.Task() as do_task, nidaqmx.Task() as ai_task:
-            do_task.do_channels.add_do_chan(f"{self.daq_device}/port0/line0:7")
-            ai_task.ai_channels.add_ai_voltage_chan(f"{self.daq_device}/ai0")
+            do_task.do_channels.add_do_chan(f"{daq}/port0/line0:7")
+            ai_task.ai_channels.add_ai_voltage_chan(f"{daq}/ai0")
             ai_task.timing.cfg_samp_clk_timing(
                 rate=self.sample_rate,
                 sample_mode=AcquisitionType.FINITE,

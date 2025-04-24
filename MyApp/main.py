@@ -16,9 +16,9 @@ def check_and_install_modules(modules):
             importlib.import_module(module)
             print(f"{module} est déjà installé.")
         except ImportError:
-            print(f"{module} n'est pas installé. Installation en cours...")
+            #print(f"{module} n'est pas installé. Installation en cours...")
             subprocess.check_call([sys.executable, "-m", "pip", "install", module])
-            print(f"{module} installé avec succès.")
+            #print(f"{module} installé avec succès.")
 
 # Vérification et installation
 check_and_install_modules(modules_required)
