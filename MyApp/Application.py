@@ -718,7 +718,8 @@ class PowerMeterApp(App):
                 file.write('Temps' + '' +  'Puissance' + '' + 'Position_X' + '' + 'Position_Y' + '' +  'longueur_onde' + ''+ '\n')
                 for i in range(len(self.historique_puissance)):
                     file.write((str(self.historique_temps_mesure[i]) + ' ' + str(self.historique_puissance[i])) + ' ' + str(self.historique_position_x[i]) +  ' ' +str(self.historique_position_y[i]) +' '+ str(self.device.wavelength) +' '+ '\n')
-            
+            messagebox.showinfo("Enregistrement", "Les données ont été enregistrées avec succès !")
+        
             pass 
 
         # Historique des actions à enregistrer dans un fichier
@@ -730,7 +731,6 @@ class PowerMeterApp(App):
                     file.write(self.Évènements[i] + '\n')
 
 
-        messagebox.showinfo("Enregistrement", "Les données ont été enregistrées avec succès !")
         #self.click_clear() EST-ce qu'on veut clear ca ? ********************************************************************************
 
 
