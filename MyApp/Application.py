@@ -550,7 +550,7 @@ class PowerMeterApp(App):
             self.wavelength_entry_label.config(state='disabled')
             self.wavelength_button_1.config(state='disabled')
             self.toolbar_puissance.grid_remove()
-            self.notebook.forget(self.tab_longeur_onde) # PEUT ÊTRE ENLEVER *******************************************************************************
+            self.notebook.forget(self.tab_longeur_onde)
         else:
             
             self.is_refreshing = False
@@ -576,7 +576,7 @@ class PowerMeterApp(App):
             self.wavelength_entry_label.config(state='normal')
             self.wavelength_button_1.config(state='normal')
             self.toolbar_puissance.grid()
-            self.notebook.add(self.tab_longeur_onde, text="Longueur d'onde") # PEUT ÊTRE ENLEVER	**************************************************************************
+            self.notebook.add(self.tab_longeur_onde, text="Longueur d'onde")
 
 
     #****************************************************************************************************** Maybe enlver
@@ -733,7 +733,7 @@ class PowerMeterApp(App):
                     file.write(self.Évènements[i] + '\n')
 
 
-        #self.click_clear() EST-ce qu'on veut clear ca ? ********************************************************************************
+        #self.click_clear() 
 
 
     def on_close(self):
@@ -773,7 +773,7 @@ class PowerMeterApp(App):
                                           + '\n' + self.Évènements[len(self.Évènements)-4]
                                           + '\n' + self.Évènements[len(self.Évènements)-5]) 
             
-        elif click is False:  # réponse négative user ************************************************************************************************************************************)
+        elif click is False:
             pass
 
         self.historique_temps_mesure = []
