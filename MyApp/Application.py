@@ -624,7 +624,8 @@ class PowerMeterApp(App):
         sigma_x, sigma_y = params[3], params[4]
         print(sigma_x, sigma_y)
 
-        if sigma_x > 6 or sigma_x < 0.5 or sigma_y > 6 or sigma_y < 0.5:
+        # Détection de la présence du laser
+        if sigma_x > 8 or sigma_x < 0.5 or sigma_y > 8 or sigma_y < 0.5: 
             self.device.power = 0
 
         values = self.device.z# Modifier pour 
@@ -718,6 +719,7 @@ class PowerMeterApp(App):
                 file.write('Temps' + '' +  'Puissance' + '' + 'Position_X' + '' + 'Position_Y' + '' +  'longueur_onde' + ''+ '\n')
                 for i in range(len(self.historique_puissance)):
                     file.write((str(self.historique_temps_mesure[i]) + ' ' + str(self.historique_puissance[i])) + ' ' + str(self.historique_position_x[i]) +  ' ' +str(self.historique_position_y[i]) +' '+ str(self.device.wavelength) +' '+ '\n')
+            
             messagebox.showinfo("Enregistrement", "Les données ont été enregistrées avec succès !")
         
             pass 

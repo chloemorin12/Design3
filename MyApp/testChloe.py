@@ -41,20 +41,6 @@ def inverse_transfer_function( Gain, w_n, z):
     
 
 
-
-#file_path = r"C:\Users\chloe\5mm_bas_validation_copie.xlsx"
-#df = pd.read_excel(file_path)
-
-
-
-#thermistance1 = df.iloc[:, :9]
-##ref = df.iloc[:, 9]
-#t = pd.to_numeric(df.iloc[:, 10], errors='coerce')
-#thermistance1 = thermistance1.apply(lambda col: col -ref, axis=0)  #subtract(ref, axis=0) #
-
-
-
-
 def puissance_calcul(data, ref, old):
     ref = [ref[1], ref[2]]
     ref = np.mean(ref)
@@ -64,6 +50,7 @@ def puissance_calcul(data, ref, old):
     #print(data[-1])
     T_max = np.max(data[-1])   
     T_average = np.mean([T_max, old])
+    print(T_max)
     old = T_max
     P_t = 0.0077*T_average**2 - 0.3708*T_average + 4.4904
     return P_t, old

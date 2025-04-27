@@ -24,6 +24,7 @@ def check_and_install_modules(modules):
 check_and_install_modules(modules_required)
 
 
+
 if __name__ == "__main__":
     app = PowerMeterApp()
     app.mainloop()
